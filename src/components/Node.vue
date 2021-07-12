@@ -1,6 +1,8 @@
 <template>
   <div class="node" @mousedown="dragStart" @dblclick="handleDblClick" :style="nodeStyle">
-    <input ref="textBox" type="text" class="text-box" v-model="nodeText">
+    <p contenteditable @input="handleInput" ref="textBox" type="text" class="text-box">
+      {{ nodeText }}
+    </p>
   </div>
 </template>
 
@@ -26,6 +28,9 @@ export default Vue.extend({
     this.$emit('mounted');
   },
   methods: {
+    handleInput(e: any) {
+      this.$emit('textChanged', e?.target.innerText);
+    },
     dragStart(e: MouseEvent) {
       e.preventDefault();
       this.isBeingDragged = true;
@@ -76,11 +81,10 @@ export default Vue.extend({
 
 <style scoped>
 .node {
-  width: 5em;
+  width: 100px;
   border: 1px solid black;
   background: white;
   position: absolute;
-  padding: 15px 10px;
   display: flex;
 }
 
@@ -91,9 +95,12 @@ export default Vue.extend({
 .text-box {
   cursor: default;
   width: 100%;
+  height: 100%;
   border: none;
   box-sizing: border-box;
   text-align: center;
   font-size: 24px;
+  margin: 0;
+  padding: 15px 10px;
 }
 </style>
