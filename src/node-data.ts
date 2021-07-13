@@ -1,6 +1,8 @@
 export interface NodeData {
+  id: string,
+  text: string,
   x: number,
   y: number
-  id: string
-  text: string
+  width: number,
+  height: number,
 }

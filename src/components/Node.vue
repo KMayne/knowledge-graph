@@ -1,5 +1,5 @@
 <template>
-  <div class="node" @mousedown="dragStart" @dblclick="handleDblClick" :style="nodeStyle">
+  <div ref="node" class="node" @mousedown="dragStart" @dblclick="handleDblClick" :style="nodeStyle">
     <p contenteditable @input="handleInput" ref="textBox" type="text" class="text-box">
       {{ nodeText }}
     </p>
@@ -28,24 +28,32 @@ export default Vue.extend({
     this.$emit('mounted');
   },
   methods: {
-    handleInput(e: any) {
-      this.$emit('textChanged', e?.target.innerText);
+    handleInput(e: InputEvent) {
+      this.$emit('textChanged', (e?.target as HTMLElement).innerText);
     },
     dragStart(e: MouseEvent) {
-      e.preventDefault();
-      this.isBeingDragged = true;
-      document.addEventListener('mousemove', this.handleMove);
       document.addEventListener('mouseup', this.dragStop);
+      // If we're not dragging the textbox, then we must be using the resize handle
+      // so allow the default operation
+      if ((e?.target as HTMLElement).tagName !== 'P') return true;
+      document.addEventListener('mousemove', this.handleMove);
+      this.isBeingDragged = true;
       this.mousePageOffset = {
         x: e.clientX,
         y: e.clientY
       }
+      e.preventDefault();
     },
     dragStop(e: Event) {
       e.preventDefault();
       document.removeEventListener('mousemove', this.handleMove);
       document.removeEventListener('mouseup', this.dragStop);
       this.isBeingDragged = false;
+
+      const node = this.$refs?.node as HTMLElement;
+      if (node.scrollWidth !== this.nodeData.width || node.scrollHeight !== this.nodeData.height) {
+        this.$emit('nodeResized', { width: node.scrollWidth, height: node.scrollHeight });
+      }
     },
     handleMove(e: Event) {
       const mouseEvent = e as MouseEvent;
@@ -72,7 +80,9 @@ export default Vue.extend({
     nodeStyle() {
       return {
         left: this.nodeData.x + 'px',
-        top: this.nodeData.y + 'px'
+        top: this.nodeData.y + 'px',
+        width: this.nodeData.width + 'px',
+        height: this.nodeData.height + 'px',
       };
     }
   }
@@ -81,11 +91,11 @@ export default Vue.extend({
 
 <style scoped>
 .node {
-  width: 100px;
   border: 1px solid black;
   background: white;
   position: absolute;
-  display: flex;
+  resize: both;
+  overflow: hidden;
 }
 
 .dragging {

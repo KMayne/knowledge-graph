@@ -4,7 +4,8 @@
       <Node v-for="node in nodes"
         :key="node.id" :node-data="node" :activateOnMount="nodeToFocus === node.id"
         @move="e => handleNodeMove(node, e)" @mounted="() => handleNodeMount(node.id)"
-        @textChanged="newText => updateText(node, newText)"
+        @textChanged="newText => { node.text = newText; saveGraph(); }"
+        @nodeResized="({width, height}) => { node.width = width; node.height = height; saveGraph(); }"
       ></Node>
     </section>
   </div>
@@ -36,6 +37,8 @@ export default Vue.extend({
     this.nodes =  [{
       x: 50,
       y: 50,
+      width: 100,
+      height: 80,
       id: Math.random().toString(16),
       text: 'Hello'
     }];
@@ -56,14 +59,17 @@ export default Vue.extend({
     },
     makeNewNode(e: MouseEvent) {
       const id = this.generateRandNodeId();
-      this.nodes.push({ x: e.clientX - 51, y: e.clientY - 31, id, text: '' });
+      this.nodes.push({
+        id,
+        text: '',
+        x: e.clientX - 50,
+        y: e.clientY - 30,
+        width: 100,
+        height: 60
+      });
       this.nodeToFocus = id;
     },
     generateRandNodeId: () => Math.random().toString(16),
-    updateText(node: NodeData, text: string) {
-      node.text = text;
-      this.saveGraph();
-    },
     saveGraph() {
       localStorage.setItem('graph', JSON.stringify(this.nodes));
     }
