@@ -1,5 +1,7 @@
 <template>
-  <div ref="node" class="node" @mousedown="dragStart" @dblclick="handleDblClick" :style="nodeStyle">
+  <div ref="node" class="node" @mousedown="dragStart"
+    @mousedown.stop="e => $emit('mousedown', e)" @dblclick="handleDblClick" :style="nodeStyle"
+    @keyup.delete="() => $emit('delete')" @click.stop="() => {}">
     <p contenteditable @input="handleInput" ref="textBox" type="text" class="text-box">
       {{ nodeText }}
     </p>
@@ -8,10 +10,11 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import { NodeData, NodeDelta } from '../Node';
 
 export default Vue.extend({
   name: 'Node',
-  props: ['nodeData', 'activateOnMount'],
+  props: ['nodeData', 'activateOnMount', 'selected'],
   data: () => ({
     isBeingDragged: false,
     mousePageOffset: {
@@ -41,7 +44,7 @@ export default Vue.extend({
       this.mousePageOffset = {
         x: e.clientX,
         y: e.clientY
-      }
+      };
       e.preventDefault();
     },
     dragStop(e: Event) {
@@ -57,16 +60,16 @@ export default Vue.extend({
     },
     handleMove(e: Event) {
       const mouseEvent = e as MouseEvent;
-      const lastX = this.mousePageOffset.x;
-      const lastY = this.mousePageOffset.y;
+      const deltaX = mouseEvent.clientX - this.mousePageOffset.x;
+      const deltaY = mouseEvent.clientY - this.mousePageOffset.y;
       this.mousePageOffset = {
         x: mouseEvent.clientX,
         y: mouseEvent.clientY
       };
-      this.$emit('move', {
-        deltaX: this.mousePageOffset.x - lastX,
-        deltaY: this.mousePageOffset.y - lastY
-      });
+      this.$emit('move', { deltaX, deltaY });
+      const x = this.nodeData.x;
+      const y = this.nodeData.y;
+      this.$emit('action', new NodeDelta(this.nodeData.id, { x, y }, { x: x + deltaX, y: y + deltaY }, 'move'));
     },
     handleDblClick(e: MouseEvent) {
       e.stopPropagation();
@@ -83,6 +86,7 @@ export default Vue.extend({
         top: this.nodeData.y + 'px',
         width: this.nodeData.width + 'px',
         height: this.nodeData.height + 'px',
+        ...(this.selected ? { border: '3px solid black' } : {})
       };
     }
   }
