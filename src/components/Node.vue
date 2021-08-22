@@ -1,8 +1,8 @@
 <template>
-  <div ref="node" class="node" @mousedown="dragStart"
-    @mousedown.stop="e => $emit('mousedown', e)" @dblclick="handleDblClick" :style="nodeStyle"
-    @keyup.delete="() => $emit('delete')" @click.stop="() => {}">
-    <p contenteditable @input="handleInput" ref="textBox" type="text" class="text-box">
+  <div ref="node" class="node" @mousedown="dragStart" @click.stop="handleClick" @dblclick.stop="startEdit"
+    :style="nodeStyle">
+    <p contenteditable @input="handleInput" ref="textBox" type="text"
+     class="text-box" :style="selected ? { padding: '12px 7px' } : {}">
       {{ nodeText }}
     </p>
   </div>
@@ -10,7 +10,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { NodeData, NodeDelta } from '../Node';
+import { NodeChange } from '../Node';
 
 export default Vue.extend({
   name: 'Node',
@@ -32,7 +32,11 @@ export default Vue.extend({
   },
   methods: {
     handleInput(e: InputEvent) {
-      this.$emit('textChanged', (e?.target as HTMLElement).innerText);
+      this.$emit('action', new NodeChange(this.nodeData.id, { text: this.nodeData.text },
+        { text: (e?.target as HTMLElement).innerText }, `text-change[${this.nodeData.id}`));
+    },
+    handleClick(e: MouseEvent) {
+      this.$emit('click', e);
     },
     dragStart(e: MouseEvent) {
       document.addEventListener('mouseup', this.dragStop);
@@ -45,6 +49,7 @@ export default Vue.extend({
         x: e.clientX,
         y: e.clientY
       };
+      this.$emit('mousedown', e);
       e.preventDefault();
     },
     dragStop(e: Event) {
@@ -55,7 +60,9 @@ export default Vue.extend({
 
       const node = this.$refs?.node as HTMLElement;
       if (node.scrollWidth !== this.nodeData.width || node.scrollHeight !== this.nodeData.height) {
-        this.$emit('nodeResized', { width: node.scrollWidth, height: node.scrollHeight });
+        this.$emit('action', new NodeChange(this.nodeData.id,
+          { width: this.nodeData.width, height: this.nodeData.height },
+          { width: node.scrollWidth, height: node.scrollHeight }, `resize[${this.nodeData.id}`));
       }
     },
     handleMove(e: Event) {
@@ -66,14 +73,10 @@ export default Vue.extend({
         x: mouseEvent.clientX,
         y: mouseEvent.clientY
       };
-      this.$emit('move', { deltaX, deltaY });
       const x = this.nodeData.x;
       const y = this.nodeData.y;
-      this.$emit('action', new NodeDelta(this.nodeData.id, { x, y }, { x: x + deltaX, y: y + deltaY }, 'move'));
-    },
-    handleDblClick(e: MouseEvent) {
-      e.stopPropagation();
-      this.startEdit();
+      this.$emit('action', new NodeChange(this.nodeData.id, { x, y }, { x: x + deltaX, y: y + deltaY },
+        `move[${this.nodeData.id}`));
     },
     startEdit() {
       (this.$refs?.textBox as HTMLElement).focus();

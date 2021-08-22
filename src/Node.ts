@@ -17,7 +17,7 @@ export interface NodeFragement {
   height?: number,
 }
 
-export class NodeDelta implements Action {
+export class NodeChange implements Action {
   nodeId: string;
   before: NodeFragement;
   after?: NodeFragement;
@@ -29,5 +29,20 @@ export class NodeDelta implements Action {
     this.after = after;
     this.mergeKey = mergeKey;
     this.type = ActionType.NodeChange;
+  }
+}
+
+export enum NodeActionType {
+  Create = 0,
+  Delete = 1
+}
+export class NodeAction implements Action {
+  type: ActionType = ActionType.NodeExistanceChange;
+  subType: NodeActionType
+  node: NodeData;
+
+  constructor(node: NodeData, subType: NodeActionType) {
+    this.node = node;
+    this.subType = subType;
   }
 }

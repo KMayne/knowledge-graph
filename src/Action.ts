@@ -12,5 +12,22 @@ export enum ActionType {
 export interface ActionProcessor {
   apply: (a: Action) => void;
   undo: (a: Action) => void;
-  mergeAction: (a: Action, b: Action) => Action | undefined
+  mergeActions: (a: Action, b: Action) => Action | undefined
+}
+
+export abstract class AbstractActionProcessor implements ActionProcessor {
+  apply(action: Action): void {
+    this.getActionHandler(action.type)?.apply(action);
+  }
+
+  undo(action: Action): void {
+    this.getActionHandler(action.type)?.undo(action);
+  }
+
+  mergeActions(a: Action, b: Action): Action | undefined {
+    if (a.type !== b.type || a.mergeKey != b.mergeKey) return;
+    return this.getActionHandler(a.type)?.mergeActions(a, b);
+  }
+
+  protected abstract getActionHandler(actionType: ActionType): ActionProcessor | undefined;
 }
