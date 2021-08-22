@@ -37,6 +37,7 @@ export class ActionHistoryTree {
       }
     }
     this.currentState = new HistoryNode(this.currentState, [], action);
+    this.currentState.parent?.children.push(this.currentState);
     this.lastActionTime = currentActionTime;
   }
 
@@ -51,7 +52,6 @@ export class ActionHistoryTree {
   }
 
   redo(): void {
-    if (!this.currentState) return console.error(`Can't undo with empty history`);
     const futureBranchCount = this.currentState.children.length;
     if (futureBranchCount < 1) return console.error(`Can't redo with no future branches`);
     this.currentState = this.currentState.children[futureBranchCount - 1];
@@ -60,5 +60,9 @@ export class ActionHistoryTree {
 
   canUndo(): boolean {
     return this.currentState.parent !== null;
+  }
+
+  canRedo(): boolean {
+    return this.currentState.children.length > 0;
   }
 }

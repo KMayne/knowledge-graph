@@ -28,7 +28,8 @@ export default Vue.extend({
   mounted() {
     window.addEventListener('keyup', e => {
       if (e.ctrlKey && e.code === 'KeyZ') {
-        if (this.history.canUndo()) this.history.undo();
+        if (e.shiftKey && this.history.canRedo()) this.history.redo()
+        else if (this.history.canUndo()) this.history.undo();
       } else if (e.code === 'Delete') {
         this.deleteNode();
       }
