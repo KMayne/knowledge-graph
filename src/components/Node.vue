@@ -1,6 +1,6 @@
 <template>
-  <div ref="node" class="node" @mousedown="dragStart" @click.stop="handleClick" @dblclick.stop="startEdit"
-    :style="nodeStyle">
+  <div ref="node" class="node" @mousedown="dragStart" @touchstart="touchStart"
+    @click.stop="handleClick" @dblclick.stop="startEdit" :style="nodeStyle">
     <p contenteditable @input="handleInput" ref="textBox" type="text"
      class="text-box" :style="selected ? { padding: '12px 7px' } : {}">
       {{ nodeText }}
@@ -38,24 +38,39 @@ export default Vue.extend({
     handleClick(e: MouseEvent) {
       this.$emit('click', e);
     },
+    touchStart(e: TouchEvent) {
+      document.addEventListener('touchend', this.dragStop);
+      document.addEventListener('touchcancel', this.dragStop);
+      // If we're not dragging the textbox, then we must be using the resize handle
+      // so allow the default operation
+      if ((e?.target as HTMLElement).tagName !== 'P') return true;
+      document.addEventListener('touchmove', this.handleTouchMove);
+      this.isBeingDragged = true;
+      this.mousePageOffset = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY
+      };
+      e.preventDefault();
+    },
     dragStart(e: MouseEvent) {
       document.addEventListener('mouseup', this.dragStop);
       // If we're not dragging the textbox, then we must be using the resize handle
       // so allow the default operation
       if ((e?.target as HTMLElement).tagName !== 'P') return true;
-      document.addEventListener('mousemove', this.handleMove);
+      document.addEventListener('mousemove', this.handleMouseMove);
       this.isBeingDragged = true;
       this.mousePageOffset = {
         x: e.clientX,
         y: e.clientY
       };
-      this.$emit('mousedown', e);
       e.preventDefault();
     },
     dragStop(e: Event) {
       e.preventDefault();
-      document.removeEventListener('mousemove', this.handleMove);
+      document.removeEventListener('mousemove', this.handleMouseMove);
+      document.removeEventListener('touchmove', this.handleTouchMove);
       document.removeEventListener('mouseup', this.dragStop);
+      document.removeEventListener('touchend', this.dragStop);
       this.isBeingDragged = false;
 
       const node = this.$refs?.node as HTMLElement;
@@ -65,14 +80,12 @@ export default Vue.extend({
           { width: node.scrollWidth, height: node.scrollHeight }, `resize[${this.nodeData.id}`));
       }
     },
-    handleMove(e: Event) {
-      const mouseEvent = e as MouseEvent;
-      const deltaX = mouseEvent.clientX - this.mousePageOffset.x;
-      const deltaY = mouseEvent.clientY - this.mousePageOffset.y;
-      this.mousePageOffset = {
-        x: mouseEvent.clientX,
-        y: mouseEvent.clientY
-      };
+    handleTouchMove(e: TouchEvent) { this.handleMove(e.touches[0].clientX, e.touches[0].clientY); },
+    handleMouseMove(e: MouseEvent) { this.handleMove(e.clientX, e.clientY); },
+    handleMove(moveX: number, moveY: number) {
+      const deltaX = moveX - this.mousePageOffset.x;
+      const deltaY = moveY - this.mousePageOffset.y;
+      this.mousePageOffset = { x: moveX, y: moveY };
       const x = this.nodeData.x;
       const y = this.nodeData.y;
       this.$emit('action', new NodeChange(this.nodeData.id, { x, y }, { x: x + deltaX, y: y + deltaY },
