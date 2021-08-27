@@ -1,6 +1,6 @@
 <template>
-  <div ref="node" class="node" @mousedown="dragStart" @touchstart="touchStart"
-    @click.stop="handleClick" @dblclick.stop="startEdit" :style="nodeStyle">
+  <div ref="node" class="node" @mousedown="mouseDown" @touchstart="touchStart"
+    @click.stop="handleClick" :style="nodeStyle">
     <p contenteditable @input="handleInput" ref="textBox" type="text"
      class="text-box" :style="selected ? { padding: '12px 7px' } : {}">
       {{ nodeText }}
@@ -39,34 +39,31 @@ export default Vue.extend({
       this.$emit('click', e);
     },
     touchStart(e: TouchEvent) {
+      // If we're not dragging the textbox, then we must be using the resize handle
+      // so allow the default operation
+      if ((e?.target as HTMLElement).tagName !== 'P') return true;
+
+      this.isBeingDragged = true;
+      this.mousePageOffset = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+
+      document.addEventListener('touchmove', this.handleTouchMove);
       document.addEventListener('touchend', this.dragStop);
       document.addEventListener('touchcancel', this.dragStop);
-      // If we're not dragging the textbox, then we must be using the resize handle
-      // so allow the default operation
-      if ((e?.target as HTMLElement).tagName !== 'P') return true;
-      document.addEventListener('touchmove', this.handleTouchMove);
-      this.isBeingDragged = true;
-      this.mousePageOffset = {
-        x: e.touches[0].clientX,
-        y: e.touches[0].clientY
-      };
-      e.preventDefault();
+      e.stopPropagation();
     },
-    dragStart(e: MouseEvent) {
-      document.addEventListener('mouseup', this.dragStop);
+    mouseDown(e: MouseEvent) {
       // If we're not dragging the textbox, then we must be using the resize handle
       // so allow the default operation
       if ((e?.target as HTMLElement).tagName !== 'P') return true;
-      document.addEventListener('mousemove', this.handleMouseMove);
+
+      this.mousePageOffset = { x: e.clientX, y: e.clientY };
       this.isBeingDragged = true;
-      this.mousePageOffset = {
-        x: e.clientX,
-        y: e.clientY
-      };
-      e.preventDefault();
+      document.addEventListener('mouseup', this.dragStop);
+      document.addEventListener('mousemove', this.handleMouseMove);
+      e.stopPropagation();
     },
     dragStop(e: Event) {
-      e.preventDefault();
+      e.stopPropagation();
       document.removeEventListener('mousemove', this.handleMouseMove);
       document.removeEventListener('touchmove', this.handleTouchMove);
       document.removeEventListener('mouseup', this.dragStop);
