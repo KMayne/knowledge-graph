@@ -6,7 +6,7 @@
     <p :contenteditable="editMode"
       ref="textBox" type="text" class="text-box"
       @input="handleInput" @blur="editMode = false"
-      style="user-select: none" :style="textBoxStyle">
+      :style="textBoxStyle">
       {{ nodeText }}
     </p>
   </div>
@@ -80,7 +80,7 @@ export default Vue.extend({
           { width: this.nodeData.width, height: this.nodeData.height },
           { width: node.scrollWidth, height: node.scrollHeight }, `resize[${this.nodeData.id}`));
       } else if (!this.hasMoved) {
-        console.log('daf')
+        // Just a normal click/tap
         this.editMode = true;
       }
     },
@@ -109,6 +109,7 @@ export default Vue.extend({
     },
     textBoxStyle() {
       return {
+        userSelect: this.editMode ? 'text' : 'none',
         ...(this.selected ? { padding: '12px 7px' } : {})
       };
     }
