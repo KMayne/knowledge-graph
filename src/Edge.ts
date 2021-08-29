@@ -1,7 +1,7 @@
 import { Action, ActionType } from "./Action";
 
 export interface Edge {
-  edgeId: string;
+  id: string;
   fromId: string;
   toId: string;
 }

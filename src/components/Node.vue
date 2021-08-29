@@ -58,11 +58,28 @@ export default Vue.extend({
         return;
       }
       // If we clicked through to the div, we're dragging the resize handle
-      if ((e?.target as HTMLElement).tagName === 'DIV') return;
+      if ((e?.target as HTMLElement).tagName === 'DIV') {
+        document.addEventListener('mousemove', this.handleResize);
+        document.addEventListener('mouseup', this.handleResize);
+        return;
+      }
 
       this.dragStart({ x: e.clientX, y: e.clientY })
       document.addEventListener('mouseup', this.dragStop);
       document.addEventListener('mousemove', this.handleMouseMove);
+    },
+    handleResize(e: MouseEvent) {
+      const node = this.$refs?.node as HTMLElement;
+      if (node.scrollWidth !== this.nodeData.width || node.scrollHeight !== this.nodeData.height) {
+        this.$emit('action', new NodeChange(this.nodeData.id,
+          { width: this.nodeData.width, height: this.nodeData.height },
+          { width: node.scrollWidth, height: node.scrollHeight }, `resize[${this.nodeData.id}`)
+        );
+      }
+      if (e.type === 'mouseup') {
+        document.removeEventListener('mousemove', this.handleResize);
+        document.removeEventListener('mouseup', this.handleResize);
+      }
     },
     dragStart(initialPosition: { x: number, y: number }) {
       this.focus();
@@ -77,13 +94,7 @@ export default Vue.extend({
       document.removeEventListener('mouseup', this.dragStop);
       document.removeEventListener('touchend', this.dragStop);
       this.isBeingDragged = false;
-
-      const node = this.$refs?.node as HTMLElement;
-      if (node.scrollWidth !== this.nodeData.width || node.scrollHeight !== this.nodeData.height) {
-        this.$emit('action', new NodeChange(this.nodeData.id,
-          { width: this.nodeData.width, height: this.nodeData.height },
-          { width: node.scrollWidth, height: node.scrollHeight }, `resize[${this.nodeData.id}`));
-      } else if (!this.hasMoved) {
+      if (!this.hasMoved) {
         // Just a normal click/tap
         this.editMode = true;
       }

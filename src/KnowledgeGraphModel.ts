@@ -114,13 +114,13 @@ export class KnowledgeGraphModel extends AbstractActionProcessor {
             const edgeAction = action as EdgeAction;
             switch (edgeAction.subType) {
               case EdgeActionType.Create: return this.edges.push(edgeAction.edge);
-              case EdgeActionType.Delete: return this.replaceEdge(edgeAction.edge.edgeId, () => undefined);
+              case EdgeActionType.Delete: return this.replaceEdge(edgeAction.edge.id, () => undefined);
             }
           },
           undo: (action: Action) => {
             const edgeAction = action as EdgeAction;
             switch (edgeAction.subType) {
-              case EdgeActionType.Create: return this.replaceEdge(edgeAction.edge.edgeId, () => undefined);
+              case EdgeActionType.Create: return this.replaceEdge(edgeAction.edge.id, () => undefined);
               case EdgeActionType.Delete: return this.edges.push(edgeAction.edge);
             }
           },
@@ -138,7 +138,7 @@ export class KnowledgeGraphModel extends AbstractActionProcessor {
   }
 
   private replaceEdge(id: string, replacer: (n: Edge) => Edge | undefined): boolean {
-    const idx = this.edges.findIndex(e => e.edgeId === id);
+    const idx = this.edges.findIndex(e => e.id === id);
     if (idx === -1) return false;
     const replacement = replacer(this.edges[idx]);
     this.edges.splice(idx, 1, ...(replacement ? [replacement] : []))

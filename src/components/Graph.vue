@@ -3,14 +3,10 @@
     @dblclick="e => makeNewNode(e.clientX, e.clientY)"
     @mousedown="selectedNode = undefined">
     <svg class="edges">
-      <line v-for="edge in edgesWithPositions"
+      <Edge v-for="edge in edgesWithPositions"
       :key="edge.fromId + edge.toId"
-        :x1="edge.fromX" :y1="edge.fromY"
-        :x2="edge.toX" :y2="edge.toY" style="stroke:black; stroke-width:3"
-      />
-      <line v-if="liveEdge" :x1="liveEdge.fromX" :y1="liveEdge.fromY"
-        :x2="liveEdge.toX" :y2="liveEdge.toY" style="stroke:black; stroke-width:3"
-      />
+      :edge="edge" @action="a => $emit('action', a)" />
+      <Edge v-if="liveEdge" :edge="liveEdge" :noHover="true" />
     </svg>
     <Node v-for="node in graph.nodes"
       :key="node.id" :node-data="node"
@@ -26,6 +22,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import NodeComponent from './Node.vue';
+import EdgeComponent from './Edge.vue';
 import { getNodeCentre, NodeAction, NodeActionType } from '@/Node';
 import { Edge, EdgeAction, EdgeActionType } from '@/Edge';
 
@@ -41,13 +38,15 @@ const DEFAULT_HEIGHT = 60;
 export default Vue.extend({
   name: 'Graph',
   components: {
-    Node: NodeComponent
+    Node: NodeComponent,
+    Edge: EdgeComponent
   },
   props: ['graph'],
   data: () => {
     return {
       nodeToFocus: null,
-      liveEdge: null as PositionedEdge | null
+      liveEdge: null as PositionedEdge | null,
+      selectedEdge: null as string | null
     }
   },
   methods: {
@@ -69,8 +68,9 @@ export default Vue.extend({
     },
     handleStartEdge(id: string) {
       const { x: fromX, y: fromY } = getNodeCentre(this.graph.getNode(id));
+      this.selectedEdge = null;
       this.liveEdge = {
-        edgeId: this.graph.generateId(),
+        id: this.graph.generateId(),
         fromId: id, toId: '',
         fromX, fromY,
         toX: fromX, toY: fromY
@@ -80,7 +80,6 @@ export default Vue.extend({
     },
     handleLiveEdgeMouseMove(e: MouseEvent) {
       if (!this.liveEdge) return;
-      console.log(e)
       const boundingRect = (this?.$refs?.graphArea as HTMLElement).getBoundingClientRect();
       this.liveEdge.toX = e.clientX - boundingRect.x;
       this.liveEdge.toY = e.clientY - boundingRect.y;
@@ -92,7 +91,7 @@ export default Vue.extend({
         && this.elementWithinNode(e.target as HTMLElement)
         && !this.graph.hasEdge(this.liveEdge.fromId, this.liveEdge.toId)) {
         this.$emit('action', new EdgeAction({
-          edgeId: this.liveEdge.edgeId,
+          id: this.liveEdge.id,
           fromId: this.liveEdge.fromId,
           toId: this.liveEdge.toId,
         }, EdgeActionType.Create))
