@@ -4,7 +4,8 @@
     @dblclick.stop
     @mousedown.stop="handleMouseDown"
     @touchstart.stop="handleTouchStart"
-    @blur="handleDivBlur">
+    @blur="handleDivBlur"
+    @mouseover="$emit('hover')">
     <p :contenteditable="editMode"
       ref="textBox" type="text" class="text-box"
       @input="handleInput" @blur="editMode = false;">
@@ -52,6 +53,10 @@ export default Vue.extend({
       if (!this.editMode) e.preventDefault();
     },
     handleMouseDown(e: MouseEvent) {
+      if (e.altKey) {
+        this.$emit('startEdge');
+        return;
+      }
       // If we clicked through to the div, we're dragging the resize handle
       if ((e?.target as HTMLElement).tagName === 'DIV') return;
 
@@ -143,16 +148,20 @@ export default Vue.extend({
 
 <style scoped>
 .node {
-  border: 1px solid black;
+  outline: 1px solid black;
   background: white;
   position: absolute;
   resize: both;
   overflow: hidden;
+  z-index: 100;
 }
 
 .node:focus-visible, .node:focus-within {
-  border: 1px solid rgb(117, 167, 248);
-  outline: 2px solid rgb(117, 167, 248);
+  outline: 3px solid rgb(117, 167, 248);
+}
+
+.node:hover:not(:focus) {
+  outline: 3px solid rgb(182, 207, 255);
 }
 
 .dragging {

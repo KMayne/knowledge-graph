@@ -1,5 +1,10 @@
 import { Action, ActionType } from './Action'
 
+interface Coords {
+  x: number,
+  y: number
+}
+
 export interface NodeData {
   id: string;
   text: string;
@@ -45,4 +50,8 @@ export class NodeAction implements Action {
     this.node = node;
     this.subType = subType;
   }
+}
+
+export function getNodeCentre(node: NodeData): Coords {
+  return { x: node.x + node.width / 2, y: node.y + node.height / 2 };
 }

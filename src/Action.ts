@@ -6,7 +6,8 @@ export interface Action {
 export enum ActionType {
   NoOp = 0,
   NodeChange = 1,
-  NodeExistanceChange = 2
+  NodeExistanceChange = 2,
+  EdgeExistanceChange = 4
 }
 
 export interface ActionProcessor {

@@ -1,12 +1,15 @@
 import { AbstractActionProcessor, Action, ActionProcessor, ActionType } from "./Action";
+import { Edge, EdgeAction, EdgeActionType } from './Edge';
 import { NodeAction, NodeActionType, NodeChange, NodeData } from "./Node";
 
 export class KnowledgeGraphModel extends AbstractActionProcessor {
   nodes: NodeData[];
+  edges: Edge[];
 
-  constructor(nodes: NodeData[]) {
+  constructor(nodes: NodeData[], edges = []) {
     super();
     this.nodes = nodes;
+    this.edges = edges;
     this.saveGraph();
   }
 
@@ -14,7 +17,8 @@ export class KnowledgeGraphModel extends AbstractActionProcessor {
     const savedGraph = localStorage.getItem('graph');
     if (savedGraph && savedGraph !== '') {
       try {
-        return new KnowledgeGraphModel(JSON.parse(savedGraph));
+        const parsedGraph = JSON.parse(savedGraph);
+        return new KnowledgeGraphModel(parsedGraph.nodes, parsedGraph.edges);
       }
       catch (e) {
         console.error('Error occured parsing saved graph - backing up graph.');
@@ -24,17 +28,20 @@ export class KnowledgeGraphModel extends AbstractActionProcessor {
     return new KnowledgeGraphModel(defaultNodeList);
   }
 
+  getNode(id: string): NodeData {
+    return this.nodes[this.getNodeIndex(id)];
+  }
+
   generateId(): string {
     return Math.random().toString(16);
   }
 
-  sortNodes(): void {
-    // Sort in reading order
-    this.nodes.sort((a: NodeData, b: NodeData) => a.y == b.y ? a.x - b.x : a.y - b.y);
+  hasEdge(fromId: string, toId: string) {
+    return this.edges.some(e => e.fromId === fromId && e.toId === toId);
   }
 
   saveGraph(): void {
-    localStorage.setItem('graph', JSON.stringify(this.nodes));
+    localStorage.setItem('graph', JSON.stringify(this));
   }
 
   protected getActionHandler(actionType: ActionType): ActionProcessor | undefined {
@@ -48,17 +55,22 @@ export class KnowledgeGraphModel extends AbstractActionProcessor {
         handler.apply(a);
         this.sortNodes();
         this.saveGraph(); },
-      undo: (a) => {
-        handler.undo(a);
-        this.sortNodes();
-        this.saveGraph();
-      },
-      mergeActions: (a, b) => handler.mergeActions(a, b)
+        undo: (a) => {
+          handler.undo(a);
+          this.sortNodes();
+          this.saveGraph();
+        },
+        mergeActions: (a, b) => handler.mergeActions(a, b)
+      }
+
     }
 
-  }
+    private sortNodes(): void {
+      // Sort in reading order
+      this.nodes.sort((a: NodeData, b: NodeData) => a.y == b.y ? a.x - b.x : a.y - b.y);
+    }
 
-  private getHandler(actionType: ActionType) {
+    private getHandler(actionType: ActionType) {
     switch (actionType) {
       case ActionType.NoOp: return { apply() {}, undo() {}, mergeActions: () => undefined } as ActionProcessor;
 
@@ -96,14 +108,44 @@ export class KnowledgeGraphModel extends AbstractActionProcessor {
           },
           mergeActions: () => undefined
         }
+      case ActionType.EdgeExistanceChange:
+        return {
+          apply: (action: Action) => {
+            const edgeAction = action as EdgeAction;
+            switch (edgeAction.subType) {
+              case EdgeActionType.Create: return this.edges.push(edgeAction.edge);
+              case EdgeActionType.Delete: return this.replaceEdge(edgeAction.edge.edgeId, () => undefined);
+            }
+          },
+          undo: (action: Action) => {
+            const edgeAction = action as EdgeAction;
+            switch (edgeAction.subType) {
+              case EdgeActionType.Create: return this.replaceEdge(edgeAction.edge.edgeId, () => undefined);
+              case EdgeActionType.Delete: return this.edges.push(edgeAction.edge);
+            }
+          },
+          mergeActions: () => undefined
+        }
     }
   }
 
   private replaceNode(id: string, replacer: (n: NodeData) => NodeData | undefined): boolean {
-    const idx = this.nodes.findIndex(n => n.id === id);
+    const idx = this.getNodeIndex(id);
     if (idx === -1) return false;
     const replacement = replacer(this.nodes[idx]);
     this.nodes.splice(idx, 1, ...(replacement ? [replacement] : []))
     return true;
+  }
+
+  private replaceEdge(id: string, replacer: (n: Edge) => Edge | undefined): boolean {
+    const idx = this.edges.findIndex(e => e.edgeId === id);
+    if (idx === -1) return false;
+    const replacement = replacer(this.edges[idx]);
+    this.edges.splice(idx, 1, ...(replacement ? [replacement] : []))
+    return true;
+  }
+
+  private getNodeIndex(id: string) {
+    return this.nodes.findIndex(n => n.id === id);
   }
 }
