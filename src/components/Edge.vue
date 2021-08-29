@@ -32,6 +32,7 @@ line {
 line:focus {
   stroke: rgb(117, 167, 248);
   outline: none;
+  stroke-width: 6px;
 }
 
 line.show-hover:hover:not(:focus) {

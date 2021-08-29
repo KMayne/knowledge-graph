@@ -14,6 +14,7 @@
       @mounted="() => handleNodeMount(node.id)"
       @startEdge="_ => handleStartEdge(node.id)"
       @hover="_ => handleNodeHover(node.id)"
+      @openGraph="$emit('openGraph', node.id)"
       @action="a => $emit('action', a)"
     ></Node>
   </section>

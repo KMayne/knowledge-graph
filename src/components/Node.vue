@@ -116,8 +116,12 @@ export default Vue.extend({
       if (e.code === 'Delete') {
         this.$emit('action', new NodeAction(this.nodeData, NodeActionType.Delete));
       } else if (e.code === 'Enter') {
-        this.startEdit();
-        e.preventDefault();
+        if (e.ctrlKey) {
+          this.$emit('openGraph');
+        } else {
+          this.startEdit();
+          e.preventDefault();
+        }
       } else if (e.code === 'Escape') {
         this.editMode = false;
         this.focus();

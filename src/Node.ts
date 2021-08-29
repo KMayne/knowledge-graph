@@ -1,4 +1,5 @@
 import { Action, ActionType } from './Action'
+import { KnowledgeGraphModel } from './KnowledgeGraphModel';
 
 interface Coords {
   x: number,
@@ -12,6 +13,7 @@ export interface NodeData {
   y: number;
   width: number;
   height: number;
+  graph?: KnowledgeGraphModel
 }
 
 export interface NodeFragement {
