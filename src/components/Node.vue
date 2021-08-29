@@ -87,6 +87,7 @@ export default Vue.extend({
     handleMouseMove(e: MouseEvent) { this.handleMove(e.clientX, e.clientY); },
     handleMove(moveX: number, moveY: number) {
       this.hasMoved = true;
+      this.focus();
       const deltaX = moveX - this.mousePageOffset.x;
       const deltaY = moveY - this.mousePageOffset.y;
       this.mousePageOffset = { x: moveX, y: moveY };
@@ -169,5 +170,6 @@ export default Vue.extend({
   margin: 0;
   padding: 15px 10px;
   outline: 0px solid transparent;
+  user-select: none;
 }
 </style>
