@@ -28,6 +28,11 @@ export class KnowledgeGraphModel extends AbstractActionProcessor {
     return Math.random().toString(16);
   }
 
+  sortNodes(): void {
+    // Sort in reading order
+    this.nodes.sort((a: NodeData, b: NodeData) => a.y == b.y ? a.x - b.x : a.y - b.y);
+  }
+
   saveGraph(): void {
     localStorage.setItem('graph', JSON.stringify(this.nodes));
   }
@@ -39,8 +44,15 @@ export class KnowledgeGraphModel extends AbstractActionProcessor {
       return;
     }
     return {
-      apply: (a) => { handler.apply(a); this.saveGraph(); },
-      undo: (a) => { handler.undo(a); this.saveGraph(); },
+      apply: (a) => {
+        handler.apply(a);
+        this.sortNodes();
+        this.saveGraph(); },
+      undo: (a) => {
+        handler.undo(a);
+        this.sortNodes();
+        this.saveGraph();
+      },
       mergeActions: (a, b) => handler.mergeActions(a, b)
     }
 

@@ -1,5 +1,5 @@
 <template>
-  <div ref="node" class="node" :style="nodeStyle"
+  <div ref="node" class="node" :style="nodeStyle" tabindex="0"
     @dblclick.stop
     @mousedown.stop="handleMouseDown"
     @touchstart.stop="handleTouchStart">
