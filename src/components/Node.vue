@@ -1,8 +1,12 @@
 <template>
-  <div ref="node" class="node" @mousedown="mouseDown" @touchstart="touchStart"
-    @click.stop="handleClick" :style="nodeStyle">
-    <p contenteditable @input="handleInput" ref="textBox" type="text"
-     class="text-box" :style="selected ? { padding: '12px 7px' } : {}">
+  <div ref="node" class="node" :style="nodeStyle"
+    @dblclick.stop
+    @mousedown.stop="handleMouseDown"
+    @touchstart.stop="handleTouchStart">
+    <p :contenteditable="editMode"
+      ref="textBox" type="text" class="text-box"
+      @input="handleInput" @blur="editMode = false"
+      style="user-select: none" :style="textBoxStyle">
       {{ nodeText }}
     </p>
   </div>
@@ -16,6 +20,8 @@ export default Vue.extend({
   name: 'Node',
   props: ['nodeData', 'activateOnMount', 'selected'],
   data: () => ({
+    editMode: false,
+    hasMoved: false,
     isBeingDragged: false,
     mousePageOffset: {
       x: 0,
@@ -26,7 +32,7 @@ export default Vue.extend({
   mounted() {
     this.nodeText = this.nodeData.text;
     if (this.activateOnMount) {
-      this.startEdit();
+      (this.$refs?.textBox as HTMLElement).focus();
     }
     this.$emit('mounted');
   },
@@ -35,32 +41,30 @@ export default Vue.extend({
       this.$emit('action', new NodeChange(this.nodeData.id, { text: this.nodeData.text },
         { text: (e?.target as HTMLElement).innerText }, `text-change[${this.nodeData.id}`));
     },
-    handleClick(e: MouseEvent) {
-      this.$emit('click', e);
-    },
-    touchStart(e: TouchEvent) {
+    handleTouchStart(e: TouchEvent) {
       // If we're not dragging the textbox, then we must be using the resize handle
       // so allow the default operation
       if ((e?.target as HTMLElement).tagName !== 'P') return true;
 
-      this.isBeingDragged = true;
-      this.mousePageOffset = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-
+      this.dragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
       document.addEventListener('touchmove', this.handleTouchMove);
       document.addEventListener('touchend', this.dragStop);
       document.addEventListener('touchcancel', this.dragStop);
-      e.stopPropagation();
+      if (!this.editMode) e.preventDefault();
     },
-    mouseDown(e: MouseEvent) {
-      // If we're not dragging the textbox, then we must be using the resize handle
-      // so allow the default operation
-      if ((e?.target as HTMLElement).tagName !== 'P') return true;
+    handleMouseDown(e: MouseEvent) {
+      // If we clicked through to the div, we're dragging the resize handle
+      if ((e?.target as HTMLElement).tagName === 'DIV') return;
 
-      this.mousePageOffset = { x: e.clientX, y: e.clientY };
-      this.isBeingDragged = true;
+      this.dragStart({ x: e.clientX, y: e.clientY })
       document.addEventListener('mouseup', this.dragStop);
       document.addEventListener('mousemove', this.handleMouseMove);
-      e.stopPropagation();
+    },
+    dragStart(initialPosition: { x: number, y: number }) {
+      this.$emit('select');
+      this.isBeingDragged = true;
+      this.hasMoved = false;
+      this.mousePageOffset = initialPosition;
     },
     dragStop(e: Event) {
       e.stopPropagation();
@@ -75,11 +79,15 @@ export default Vue.extend({
         this.$emit('action', new NodeChange(this.nodeData.id,
           { width: this.nodeData.width, height: this.nodeData.height },
           { width: node.scrollWidth, height: node.scrollHeight }, `resize[${this.nodeData.id}`));
+      } else if (!this.hasMoved) {
+        console.log('daf')
+        this.editMode = true;
       }
     },
     handleTouchMove(e: TouchEvent) { this.handleMove(e.touches[0].clientX, e.touches[0].clientY); },
     handleMouseMove(e: MouseEvent) { this.handleMove(e.clientX, e.clientY); },
     handleMove(moveX: number, moveY: number) {
+      this.hasMoved = true;
       const deltaX = moveX - this.mousePageOffset.x;
       const deltaY = moveY - this.mousePageOffset.y;
       this.mousePageOffset = { x: moveX, y: moveY };
@@ -87,9 +95,6 @@ export default Vue.extend({
       const y = this.nodeData.y;
       this.$emit('action', new NodeChange(this.nodeData.id, { x, y }, { x: x + deltaX, y: y + deltaY },
         `move[${this.nodeData.id}`));
-    },
-    startEdit() {
-      (this.$refs?.textBox as HTMLElement).focus();
     }
   },
   computed: {
@@ -100,6 +105,11 @@ export default Vue.extend({
         width: this.nodeData.width + 'px',
         height: this.nodeData.height + 'px',
         ...(this.selected ? { border: '3px solid black' } : {})
+      };
+    },
+    textBoxStyle() {
+      return {
+        ...(this.selected ? { padding: '12px 7px' } : {})
       };
     }
   }
