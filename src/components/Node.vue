@@ -3,10 +3,11 @@
     @keydown="handleKeyDown"
     @dblclick.stop
     @mousedown.stop="handleMouseDown"
-    @touchstart.stop="handleTouchStart">
+    @touchstart.stop="handleTouchStart"
+    @blur="handleDivBlur">
     <p :contenteditable="editMode"
       ref="textBox" type="text" class="text-box"
-      @input="handleInput" @blur="editMode = false"
+      @input="handleInput" @blur="editMode = false;"
       :style="textBoxStyle">
       {{ nodeText }}
     </p>
@@ -19,7 +20,7 @@ import { NodeAction, NodeActionType, NodeChange } from '../Node';
 
 export default Vue.extend({
   name: 'Node',
-  props: ['nodeData', 'activateOnMount', 'selected'],
+  props: ['nodeData', 'activateOnMount'],
   data: () => ({
     editMode: false,
     hasMoved: false,
@@ -106,6 +107,11 @@ export default Vue.extend({
         this.focus();
       }
     },
+    handleDivBlur(e: FocusEvent) {
+      if (e.relatedTarget !== this.$refs.textBox) {
+        this.editMode = false;
+      }
+    },
     focus() {
       (this?.$refs.node as HTMLElement).focus();
     },
@@ -149,6 +155,10 @@ export default Vue.extend({
   overflow: hidden;
 }
 
+.node:focus-visible, .node:focus-within {
+  outline: 3px solid black;
+}
+
 .dragging {
   cursor: move !important;
 }
@@ -163,5 +173,6 @@ export default Vue.extend({
   font-size: 24px;
   margin: 0;
   padding: 15px 10px;
+  outline: 0px solid transparent;
 }
 </style>

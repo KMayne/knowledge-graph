@@ -1,7 +1,9 @@
 <template>
   <div>
-    <button @click.stop="() => history.undo()" :disabled="!(history.canUndo())">Undo</button>
-    <button @click.stop="() => history.redo()" :disabled="!(history.canRedo())">Redo</button>
+    <div class="toolbar">
+      <button @click.stop="() => history.undo()" :disabled="!(history.canUndo())">Undo</button>
+      <button @click.stop="() => history.redo()" :disabled="!(history.canRedo())">Redo</button>
+    </div>
     <Graph :graph="graph" @action="handleAction"></Graph>
   </div>
 </template>

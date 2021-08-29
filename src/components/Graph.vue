@@ -14,7 +14,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import NodeComponent from './Node.vue';
-import { NodeAction, NodeActionType, NodeData } from '@/Node';
+import { NodeAction, NodeActionType } from '@/Node';
 
 const DEFAULT_WIDTH = 100;
 const DEFAULT_HEIGHT = 60;
@@ -26,8 +26,8 @@ export default Vue.extend({
   props: ['graph'],
   data: () => {
     return {
-      nodeToFocus: null,
-    } as { nodeToFocus: string|null }
+      nodeToFocus: null
+    }
   },
   methods: {
     makeNewNode(x: number, y: number) {
@@ -54,7 +54,10 @@ export default Vue.extend({
 .graph-area {
   width: 100%;
   height: 100%;
-  background: #eee;
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, #E7E7E7 1px, transparent 1px),
+    linear-gradient(to bottom, #E7E7E7 1px, transparent 1px);
   position: relative;
 }
 </style>
