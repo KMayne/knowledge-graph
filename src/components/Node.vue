@@ -7,8 +7,7 @@
     @blur="handleDivBlur">
     <p :contenteditable="editMode"
       ref="textBox" type="text" class="text-box"
-      @input="handleInput" @blur="editMode = false;"
-      :style="textBoxStyle">
+      @input="handleInput" @blur="editMode = false;">
       {{ nodeText }}
     </p>
   </div>
@@ -136,11 +135,6 @@ export default Vue.extend({
         width: this.nodeData.width + 'px',
         height: this.nodeData.height + 'px',
       };
-    },
-    textBoxStyle() {
-      return {
-        userSelect: this.editMode ? 'text' : 'none',
-      };
     }
   }
 });
@@ -156,7 +150,8 @@ export default Vue.extend({
 }
 
 .node:focus-visible, .node:focus-within {
-  outline: 3px solid black;
+  border: 1px solid rgb(117, 167, 248);
+  outline: 2px solid rgb(117, 167, 248);
 }
 
 .dragging {
