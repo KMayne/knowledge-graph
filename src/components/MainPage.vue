@@ -70,7 +70,7 @@ export default Vue.extend({
       if (targetIdx === -1) return console.error(`Cannot find graph in stack with id "${graphId}"`);
       this.graph = this.graphStack[targetIdx];
       this.history = new ActionHistoryTree(this.graph);
-      this.graphStack = this.graphStack.slice(0, targetIdx - 1);
+      this.graphStack = this.graphStack.slice(0, targetIdx);
     },
   },
   computed: {
