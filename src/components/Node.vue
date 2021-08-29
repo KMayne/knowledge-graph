@@ -1,5 +1,6 @@
 <template>
   <div ref="node" class="node" :style="nodeStyle" tabindex="0"
+    @keydown="handleKeyDown"
     @dblclick.stop
     @mousedown.stop="handleMouseDown"
     @touchstart.stop="handleTouchStart">
@@ -14,7 +15,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { NodeChange } from '../Node';
+import { NodeAction, NodeActionType, NodeChange } from '../Node';
 
 export default Vue.extend({
   name: 'Node',
@@ -31,9 +32,7 @@ export default Vue.extend({
   }),
   mounted() {
     this.nodeText = this.nodeData.text;
-    if (this.activateOnMount) {
-      (this.$refs?.textBox as HTMLElement).focus();
-    }
+    if (this.activateOnMount) { this.startEdit(); }
     this.$emit('mounted');
   },
   methods: {
@@ -61,7 +60,7 @@ export default Vue.extend({
       document.addEventListener('mousemove', this.handleMouseMove);
     },
     dragStart(initialPosition: { x: number, y: number }) {
-      this.$emit('select');
+      this.focus();
       this.isBeingDragged = true;
       this.hasMoved = false;
       this.mousePageOffset = initialPosition;
@@ -95,6 +94,32 @@ export default Vue.extend({
       const y = this.nodeData.y;
       this.$emit('action', new NodeChange(this.nodeData.id, { x, y }, { x: x + deltaX, y: y + deltaY },
         `move[${this.nodeData.id}`));
+    },
+    handleKeyDown(e: KeyboardEvent) {
+      if (e.code === 'Delete') {
+        this.$emit('action', new NodeAction(this.nodeData, NodeActionType.Delete));
+      } else if (e.code === 'Enter') {
+        this.startEdit();
+        e.preventDefault();
+      } else if (e.code === 'Escape') {
+        this.editMode = false;
+        this.focus();
+      }
+    },
+    focus() {
+      (this?.$refs.node as HTMLElement).focus();
+    },
+    startEdit() {
+      this.editMode = true;
+      const textBox = (this.$refs?.textBox as HTMLElement);
+      textBox.contentEditable = 'true';
+      textBox.focus();
+      const range = document.createRange();
+      range.selectNodeContents(textBox);
+      range.collapse(false);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
     }
   },
   computed: {
@@ -104,13 +129,11 @@ export default Vue.extend({
         top: this.nodeData.y + 'px',
         width: this.nodeData.width + 'px',
         height: this.nodeData.height + 'px',
-        ...(this.selected ? { border: '3px solid black' } : {})
       };
     },
     textBoxStyle() {
       return {
         userSelect: this.editMode ? 'text' : 'none',
-        ...(this.selected ? { padding: '12px 7px' } : {})
       };
     }
   }

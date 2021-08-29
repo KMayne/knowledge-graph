@@ -1,14 +1,11 @@
 <template>
   <section class="graph-area"
-    @keypress="handleKeyPress"
     @dblclick="e => makeNewNode(e.clientX, e.clientY)"
     @mousedown="selectedNode = undefined">
     <Node v-for="node in graph.nodes"
       :key="node.id" :node-data="node"
       :activateOnMount="nodeToFocus === node.id"
       @mounted="() => handleNodeMount(node.id)"
-      :selected="selectedNode === node.id"
-      @select="selectedNode = node.id"
       @action="a => $emit('action', a)"
     ></Node>
   </section>
@@ -29,9 +26,8 @@ export default Vue.extend({
   props: ['graph'],
   data: () => {
     return {
-      selectedNode: null,
       nodeToFocus: null,
-    } as { selectedNode: string|null, nodeToFocus: string|null }
+    } as { nodeToFocus: string|null }
   },
   methods: {
     makeNewNode(x: number, y: number) {
@@ -46,20 +42,9 @@ export default Vue.extend({
         height: DEFAULT_HEIGHT
       }, NodeActionType.Create));
       this.nodeToFocus = newId;
-      this.selectedNode = newId;
     },
     handleNodeMount(id: string) {
       if (this.nodeToFocus === id) this.nodeToFocus = null;
-    },
-    handleKeyPress(e: KeyboardEvent) {
-       if (e.code === 'Delete') {
-        this.deleteNode();
-      }
-    },
-    deleteNode() {
-      const nodeToDelete = this.graph.nodes.find((n: NodeData) => n.id === this.selectedNode);
-      if (nodeToDelete === undefined) return false;
-      this.$emit('action', new NodeAction(nodeToDelete, NodeActionType.Delete));
     }
   }
 });
