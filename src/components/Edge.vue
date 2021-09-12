@@ -3,6 +3,8 @@
         :x2="edge.toX" :y2="edge.toY"
         :tabindex="0" :class="{ 'show-hover': !noHover }"
         @keydown="handleKeyDown"
+        @focus="$emit('focus')"
+        @blur="$emit('blur')"
   />
 </template>
 

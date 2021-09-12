@@ -41,6 +41,10 @@ export class KnowledgeGraphModel extends AbstractActionProcessor implements Grap
     return this.nodes[this.getNodeIndex(id)];
   }
 
+  getEdge(id: string): Edge | undefined {
+    return this.edges.find(e => e.id === id);
+  }
+
   generateId(): string {
     return Math.random().toString(16);
   }

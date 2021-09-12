@@ -8,7 +8,7 @@
     @mouseover="$emit('hover')">
     <p :contenteditable="editMode"
       ref="textBox" type="text" class="text-box"
-      @input="handleInput" @blur="editMode = false;">
+      @input="handleInput" @blur="handleTextBoxBlur">
       {{ nodeText }}
     </p>
   </div>
@@ -130,10 +130,16 @@ export default Vue.extend({
     handleDivBlur(e: FocusEvent) {
       if (e.relatedTarget !== this.$refs.textBox) {
         this.editMode = false;
+        this.$emit('blur', e);
       }
+    },
+    handleTextBoxBlur(e: FocusEvent) {
+      this.editMode = false;
+      this.$emit('blur', e);
     },
     focus() {
       (this?.$refs.node as HTMLElement).focus();
+      this.$emit('focus');
     },
     startEdit() {
       this.editMode = true;

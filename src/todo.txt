@@ -1,0 +1,12 @@
+Ideas:
+* Add some kind of navigation for switching to different graphs
+* Add directional relationships
+* Allow visual transformations
+* Other data types e.g. list (could be encoded in named relationship as linked list)
+* Add node sidebar
+
+Node sidebar
+* Edit node data
+* View path?
+* View virtual layer membership (where applicable)
+* View related nodes

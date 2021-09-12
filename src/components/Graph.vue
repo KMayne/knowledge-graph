@@ -1,11 +1,11 @@
 <template>
   <section ref="graphArea" class="graph-area"
-    @dblclick="e => makeNewNode(e.clientX, e.clientY)"
-    @mousedown="selectedNode = undefined">
+    @dblclick="e => makeNewNode(e.clientX, e.clientY)">
     <svg class="edges">
       <Edge v-for="edge in edgesWithPositions"
       :key="edge.fromId + edge.toId"
-      :edge="edge" @action="a => $emit('action', a)" />
+      :edge="edge" @action="a => $emit('action', a)"
+      @focus="selectedEdge = edge.id" @blur="selectedEdge = null" />
       <Edge v-if="liveEdge" :edge="liveEdge" :noHover="true" />
     </svg>
     <Node v-for="node in graph.nodes"
@@ -16,7 +16,11 @@
       @hover="_ => handleNodeHover(node.id)"
       @openGraph="$emit('openGraph', node.id)"
       @action="a => $emit('action', a)"
+      @focus="updateSelectedNode(node.id)"
+      @blur="updateSelectedNode(null)"
     ></Node>
+    <property-panel v-if="selectedObject" :target="selectedObject" :targetType="selectedObjectType">
+    </property-panel>
   </section>
 </template>
 
@@ -24,7 +28,8 @@
 import Vue from 'vue';
 import NodeComponent from './Node.vue';
 import EdgeComponent from './Edge.vue';
-import { getNodeCentre, NodeAction, NodeActionType } from '@/Node';
+import PropertyPanel from './PropertyPanel.vue';
+import { getNodeCentre, NodeAction, NodeActionType, NodeData } from '@/Node';
 import { Edge, EdgeAction, EdgeActionType } from '@/Edge';
 
 type PositionedEdge = ({
@@ -40,14 +45,16 @@ export default Vue.extend({
   name: 'Graph',
   components: {
     Node: NodeComponent,
-    Edge: EdgeComponent
+    Edge: EdgeComponent,
+    PropertyPanel
   },
   props: ['graph'],
   data: () => {
     return {
       nodeToFocus: null,
       liveEdge: null as PositionedEdge | null,
-      selectedEdge: null as string | null
+      selectedEdge: null as string | null,
+      selectedNodeId: null as string | null
     }
   },
   methods: {
@@ -110,6 +117,9 @@ export default Vue.extend({
         this.liveEdge.toX = toX;
         this.liveEdge.toY = toY;
       }
+    },
+    updateSelectedNode(id: string | null) {
+      this.selectedNodeId = id;
     }
   },
   computed: {
@@ -121,6 +131,16 @@ export default Vue.extend({
         const { x: toX, y: toY } = getNodeCentre(toNode);
         return { ...edge, fromX, fromY, toX, toY };
      });
+    },
+    selectedObject(): NodeData | Edge {
+      return this.selectedNodeId
+        ? this.graph.getNode(this.selectedNodeId)
+        : this.selectedEdge && this.graph.getEdge(this.selectedEdge);
+    },
+    selectedObjectType(): string {
+      return this.selectedNodeId ? 'node'
+             : this.selectedEdge ? 'edge'
+             : '';
     }
   }
 });
