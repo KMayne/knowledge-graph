@@ -25,8 +25,8 @@ export default Vue.extend({
   computed: {
     directionOptions: () => [
       EdgeDirection[EdgeDirection.Undirected],
-      EdgeDirection[EdgeDirection.Directional,
-      EdgeDirection[EdgeDirection.Bidirectional
+      EdgeDirection[EdgeDirection.Directional],
+      EdgeDirection[EdgeDirection.Bidirectional]
     ]
   }
 });
