@@ -23,7 +23,11 @@ export default Vue.extend({
     }
   },
   computed: {
-    directionOptions: () => Object.keys(EdgeDirection).filter((k => typeof (EdgeDirection[k]) === "number"))
+    directionOptions: () => [
+      EdgeDirection[EdgeDirection.Undirected],
+      EdgeDirection[EdgeDirection.Directional,
+      EdgeDirection[EdgeDirection.Bidirectional
+    ]
   }
 });
 </script>
