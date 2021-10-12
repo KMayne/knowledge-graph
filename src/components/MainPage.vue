@@ -1,15 +1,7 @@
 <template>
   <div>
-    <div class="toolbar">
-      <span class="breadcrumb-display">
-        <span v-for="graph in graphStack" :key="graph.id">
-          <a href="#" @click="popToGraph(graph.id)">{{graph.name}}</a> &gt;
-        </span>
-        {{graph.name}}
-      </span>
-      <button @click.stop="() => history.undo()" :disabled="!(history.canUndo())">Undo</button>
-      <button @click.stop="() => history.redo()" :disabled="!(history.canRedo())">Redo</button>
-    </div>
+    <Toolbar :history="history" :graph-stack="graphStack" :current-graph-name="graph.name"
+      @graphClicked="graphId => popToGraph(graphId)"></Toolbar>
     <Graph :graph="graph"
       @openGraph="openGraph"
       @action="handleAction"></Graph>
@@ -20,12 +12,13 @@
 import Vue from 'vue';
 import { ActionHistoryTree } from '@/ActionHistoryTree';
 import GraphComponent from './Graph.vue';
+import ToolbarComponent from './Toolbar.vue';
 import { KnowledgeGraphModel } from '@/KnowledgeGraphModel';
 import { Action } from '@/Action';
 
 export default Vue.extend({
   name: 'MainPage',
-  components: { Graph: GraphComponent },
+  components: { Graph: GraphComponent, Toolbar: ToolbarComponent },
   mounted() {
     window.addEventListener('keypress', e => {
       if (e.ctrlKey && e.code === 'KeyZ') {
@@ -36,12 +29,12 @@ export default Vue.extend({
   },
   data: () => {
     const rootGraph = KnowledgeGraphModel.loadFromStorage([{
+      id: Math.random().toString(16),
+      text: 'Hello',
       x: 50,
       y: 50,
       width: 100,
       height: 80,
-      id: Math.random().toString(16),
-      text: 'Hello'
     }]);
     return {
       rootGraphId: rootGraph.id,
@@ -82,5 +75,4 @@ export default Vue.extend({
 </script>
 
 <style scoped>
-
 </style>

@@ -1,0 +1,31 @@
+Visual:
+* Improve sidebar styling ✅
+* Add proper app bar ✅
+* Improve visibility of subgraphs
+
+Usability:
+* Add sidebar for editing additional data  ✅
+* Add panning/zoom
+* Add minimap
+* Store data in PouchDB
+* Sync PouchDB to CouchDB
+* Add Google login
+* Improve usability on mobile
+* Add search for nodes in all graphs and layers
+* Display reflexive relationships properly
+* Add some kind of navigation for switching to different graphs
+* Automatically arrange nodes
+
+Utility:
+* Different node data types (can have multiple types on one node)
+* Introduce concept of (virtual) layers
+* Add directional relationships ✅
+* Allow visual transformations of same content
+* Add history graph and allow traversing to arbitrary points in the graph
+* Add layer graph
+
+Property panel:
+* Edit node/edge data ✅
+* View path?
+* View virtual layer membership (where applicable)
+* View related nodes

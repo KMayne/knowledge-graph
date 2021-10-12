@@ -14,7 +14,7 @@ export default Vue.extend({
 #app {
   height: 100%;
   box-sizing: border-box;
-  font-family: Segoe UI;
+  font-family: 'Roboto', sans-serif;
   text-align: center;
   overflow: hidden;
 }

@@ -1,6 +1,8 @@
 <template>
-  <div ref="node" class="node" :style="nodeStyle" tabindex="0"
+  <div ref="node" class="node md-elevation-1" :style="nodeStyle" tabindex="0"
+    :class="{ selected }"
     @keydown="handleKeyDown"
+    @click.stop
     @dblclick.stop
     @mousedown.stop="handleMouseDown"
     @touchstart.stop="handleTouchStart"
@@ -8,7 +10,7 @@
     @mouseover="$emit('hover')">
     <p :contenteditable="editMode"
       ref="textBox" type="text" class="text-box"
-      @input="handleInput" @blur="editMode = false;">
+      @input="handleInput" @blur="handleTextBoxBlur">
       {{ nodeText }}
     </p>
   </div>
@@ -20,7 +22,7 @@ import { NodeAction, NodeActionType, NodeChange } from '../Node';
 
 export default Vue.extend({
   name: 'Node',
-  props: ['nodeData', 'activateOnMount'],
+  props: ['nodeData', 'activateOnMount', 'selected'],
   data: () => ({
     editMode: false,
     hasMoved: false,
@@ -35,6 +37,13 @@ export default Vue.extend({
     this.nodeText = this.nodeData.text;
     if (this.activateOnMount) { this.startEdit(); }
     this.$emit('mounted');
+  },
+  watch: {
+    nodeData() {
+      if (!this.editMode) {
+        this.nodeText = this.nodeData.text;
+      }
+    }
   },
   methods: {
     handleInput(e: InputEvent) {
@@ -67,6 +76,7 @@ export default Vue.extend({
       this.dragStart({ x: e.clientX, y: e.clientY })
       document.addEventListener('mouseup', this.dragStop);
       document.addEventListener('mousemove', this.handleMouseMove);
+      this.$emit('focus');
     },
     handleResize(e: MouseEvent) {
       const node = this.$refs?.node as HTMLElement;
@@ -130,10 +140,16 @@ export default Vue.extend({
     handleDivBlur(e: FocusEvent) {
       if (e.relatedTarget !== this.$refs.textBox) {
         this.editMode = false;
+        this.$emit('blur', e);
       }
+    },
+    handleTextBoxBlur(e: FocusEvent) {
+      this.editMode = false;
+      this.$emit('blur', e);
     },
     focus() {
       (this?.$refs.node as HTMLElement).focus();
+      this.$emit('focus');
     },
     startEdit() {
       this.editMode = true;
@@ -150,11 +166,12 @@ export default Vue.extend({
   },
   computed: {
     nodeStyle() {
+      const r = this.nodeData;
       return {
-        left: this.nodeData.x + 'px',
-        top: this.nodeData.y + 'px',
-        width: this.nodeData.width + 'px',
-        height: this.nodeData.height + 'px',
+        left: r.x + 'px',
+        top: r.y + 'px',
+        width: r.width + 'px',
+        height: r.height + 'px',
       };
     }
   }
@@ -163,15 +180,18 @@ export default Vue.extend({
 
 <style scoped>
 .node {
-  outline: 1px solid black;
   background: white;
   position: absolute;
   resize: both;
   overflow: hidden;
-  z-index: 100;
+  font-family: 'Rubik', sans-serif;
 }
 
-.node:focus-visible, .node:focus-within {
+.node::-webkit-resizer {
+  background-color: transparent;
+}
+
+.node:focus-visible, .node:focus-within, .node.selected {
   outline: 3px solid rgb(117, 167, 248);
 }
 
