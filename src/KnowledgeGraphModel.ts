@@ -1,5 +1,5 @@
 import { AbstractActionProcessor, Action, ActionProcessor, ActionType } from "./Action";
-import { Edge, EdgeAction, EdgeActionType } from './Edge';
+import { Edge, EdgeAction, EdgeChange, EdgeActionType } from './Edge';
 import { NodeAction, NodeActionType, NodeChange, NodeData } from "./Node";
 
 export interface Graph {
@@ -34,7 +34,7 @@ export class KnowledgeGraphModel extends AbstractActionProcessor implements Grap
         localStorage.setItem('graph-backup-' + (new Date()).toISOString(), savedGraph);
       }
     }
-    return new KnowledgeGraphModel('Root', defaultNodeList);
+    return new KnowledgeGraphModel('🌲', defaultNodeList);
   }
 
   getNode(id: string): NodeData {
@@ -119,6 +119,23 @@ export class KnowledgeGraphModel extends AbstractActionProcessor implements Grap
         },
         mergeActions: () => undefined
       }
+
+    case ActionType.EdgeChange:
+      return {
+        apply: (action: Action) => {
+          const edgeChange = action as EdgeChange;
+          this.replaceEdge(edgeChange.edgeId, node => ({ ...node, ...edgeChange.after }));
+        },
+        undo: (action: Action) => {
+          const edgeChange = action as EdgeChange;
+          this.replaceEdge(edgeChange.edgeId, node => ({ ...node, ...edgeChange.before }));
+        },
+        mergeActions: (a: Action, b: Action) => {
+          if ((a as EdgeChange).edgeId !== (b as EdgeChange).edgeId) return;
+          return { ...(b as EdgeChange), before: (a as EdgeChange).before } as EdgeChange;
+        }
+      }
+
     case ActionType.EdgeExistanceChange:
       return {
         apply: (action: Action) => {
@@ -142,7 +159,10 @@ export class KnowledgeGraphModel extends AbstractActionProcessor implements Grap
 
   private replaceNode(id: string, replacer: (n: NodeData) => NodeData | undefined): boolean {
     const idx = this.getNodeIndex(id);
-    if (idx === -1) return false;
+    if (idx === -1) {
+      console.warn('Node replacement target not found');
+      return false;
+    }
     const replacement = replacer(this.nodes[idx]);
     this.nodes.splice(idx, 1, ...(replacement ? [replacement] : []))
     return true;
@@ -150,7 +170,10 @@ export class KnowledgeGraphModel extends AbstractActionProcessor implements Grap
 
   private replaceEdge(id: string, replacer: (n: Edge) => Edge | undefined): boolean {
     const idx = this.edges.findIndex(e => e.id === id);
-    if (idx === -1) return false;
+    if (idx === -1) {
+      console.warn('Edge replacement target not found');
+      return false;
+    }
     const replacement = replacer(this.edges[idx]);
     this.edges.splice(idx, 1, ...(replacement ? [replacement] : []))
     return true;
