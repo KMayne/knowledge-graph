@@ -22,7 +22,7 @@ import { NodeAction, NodeActionType, NodeChange } from '../Node';
 
 export default Vue.extend({
   name: 'Node',
-  props: ['nodeData', 'activateOnMount', 'selected'],
+  props: ['nodeData', 'activateOnMount', 'selected', 'offsetX', 'offsetY'],
   data: () => ({
     editMode: false,
     hasMoved: false,
@@ -109,8 +109,8 @@ export default Vue.extend({
         this.editMode = true;
       }
     },
-    handleTouchMove(e: TouchEvent) { this.handleMove(e.touches[0].clientX, e.touches[0].clientY); },
-    handleMouseMove(e: MouseEvent) { this.handleMove(e.clientX, e.clientY); },
+    handleTouchMove(e: TouchEvent) { this.handleMove(e.touches[0].clientX, e.touches[0].clientY); return false; },
+    handleMouseMove(e: MouseEvent) { this.handleMove(e.clientX, e.clientY); return false; },
     handleMove(moveX: number, moveY: number) {
       this.hasMoved = true;
       this.focus();
@@ -168,8 +168,8 @@ export default Vue.extend({
     nodeStyle() {
       const r = this.nodeData;
       return {
-        left: r.x + 'px',
-        top: r.y + 'px',
+        left: (r.x + this.offsetX) + 'px',
+        top: (r.y + this.offsetY) + 'px',
         width: r.width + 'px',
         height: r.height + 'px',
       };

@@ -1,7 +1,9 @@
 <template>
-  <section ref="graphArea" class="graph-area"
-    @mousedown="selectedNodeId = null; selectedEdge = null"
-    @dblclick="makeNewNode">
+  <section ref="graphArea" class="graph-area" :style="{ backgroundPosition }"
+    @touchstart.stop="handleTouchStart"
+    @mousedown="handleMouseDown"
+    @dblclick="makeNewNode"
+    @blur="handleBackgroundDragStop">
     <svg class="edges">
       <Edge v-for="edge in edgesWithPositions"
       :key="edge.fromId + edge.toId"
@@ -12,6 +14,7 @@
     </svg>
     <Node v-for="node in graph.nodes"
       :key="node.id" :node-data="node"
+      :offsetX="offsetX" :offsetY="offsetY"
       :activateOnMount="nodeToFocus === node.id"
       :selected="selectedNodeId === node.id"
       @mounted="() => handleNodeMount(node.id)"
@@ -57,7 +60,10 @@ export default Vue.extend({
       nodeToFocus: null,
       liveEdge: null as PositionedEdge | null,
       selectedEdge: null as string | null,
-      selectedNodeId: null as string | null
+      selectedNodeId: null as string | null,
+      offsetX: 0,
+      offsetY: 0,
+      lastTouch: null as Touch | null
     }
   },
   methods: {
@@ -79,14 +85,15 @@ export default Vue.extend({
       if (this.nodeToFocus === id) this.nodeToFocus = null;
     },
     handleStartEdge(id: string) {
-      const { x: fromX, y: fromY } = getRectCentre(this.graph.getNode(id));
+      const { x, y } = getRectCentre(this.graph.getNode(id));
+      const [nodeCenterX, nodeCenterY] = [x + this.offsetX, y + this.offsetY]
       this.selectedEdge = null;
       this.liveEdge = {
         id: this.graph.generateId(),
         direction: EdgeDirection.Undirected,
         fromId: id, toId: '',
-        fromX, fromY,
-        toX: fromX, toY: fromY
+        fromX: nodeCenterX, fromY: nodeCenterY,
+        toX: nodeCenterX, toY: nodeCenterY
       };
       document.addEventListener('mousemove', this.handleLiveEdgeMouseMove);
       document.addEventListener('mouseup', this.handleEdgeMouseUp)
@@ -112,6 +119,39 @@ export default Vue.extend({
       }
       this.liveEdge = null;
     },
+    handleMouseDown() {
+      this.selectedNodeId = null;
+      this.selectedEdge = null;
+      document.addEventListener('mousemove', this.handleBackgroundDrag);
+      document.addEventListener('mouseup', this.handleBackgroundDragStop);
+    },
+    handleTouchStart(e: TouchEvent) {
+      e.preventDefault();
+      this.selectedNodeId = null;
+      this.selectedEdge = null;
+      if (e.touches.length > 1) return false;
+      this.lastTouch = e.touches[0];
+      document.addEventListener('touchmove', this.handleBackgroundTouchDrag);
+      document.addEventListener('touchend', this.handleBackgroundDragStop);
+      document.addEventListener('touchcancel', this.handleBackgroundDragStop);
+    },
+    handleBackgroundDrag(e: MouseEvent) {
+      this.offsetX += e.movementX;
+      this.offsetY += e.movementY;
+    },
+    handleBackgroundTouchDrag(e: TouchEvent) {
+      if (e.touches.length > 1) this.handleBackgroundDragStop();
+      const currentTouch = e.touches[0];
+      this.offsetX += this.lastTouch?.clientX ? (currentTouch.clientX - this.lastTouch?.clientX) : 0;
+      this.offsetY += this.lastTouch?.clientY ? (currentTouch.clientY - this.lastTouch?.clientY) : 0;
+      this.lastTouch = currentTouch;
+    },
+    handleBackgroundDragStop() {
+        document.removeEventListener('mousemove', this.handleBackgroundDrag);
+        document.removeEventListener('touchmove', this.handleBackgroundTouchDrag);
+        document.removeEventListener('mouseup', this.handleBackgroundDragStop);
+        this.lastTouch = null;
+    },
     elementWithinNode(element: HTMLElement | null): boolean {
       if (element === null) return false;
       return element.classList.contains('node') || this.elementWithinNode(element.parentElement);
@@ -134,8 +174,14 @@ export default Vue.extend({
      return this.graph.edges.map((edge: Edge) => {
         const fromNode = this.graph.getNode(edge.fromId);
         const toNode = this.graph.getNode(edge.toId);
-        const edgeCoords = getClippedCentreJoiningLine(fromNode, toNode);
-        return { ...edge, ...edgeCoords };
+        const { fromX, fromY, toX, toY} = getClippedCentreJoiningLine(fromNode, toNode);
+        return {
+          ...edge,
+          fromX: fromX + this.offsetX,
+          fromY: fromY + this.offsetY,
+          toX: toX + this.offsetX,
+          toY: toY + this.offsetY
+        };
      });
     },
     selectedObject(): NodeData | Edge {
@@ -147,6 +193,9 @@ export default Vue.extend({
       return this.selectedNodeId ? 'node'
              : this.selectedEdge ? 'edge'
              : '';
+    },
+    backgroundPosition(): string {
+      return `${this.offsetX}px ${this.offsetY}px`;
     }
   }
 });
