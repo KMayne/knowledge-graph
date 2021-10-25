@@ -1,4 +1,4 @@
-# knowledge-graph
+# Tree
 
 ## Project setup
 ```
