@@ -12,11 +12,11 @@
     </span>
     <span class="group">
       <md-button class="md-icon-button"
-        @click.stop="() => history.undo()" :disabled="!(history.canUndo())">
+        @click.stop="$emit('undo')" :disabled="!(historyState.canUndo())">
         <md-icon> undo </md-icon>
       </md-button>
       <md-button  class="md-icon-button"
-        @click.stop="() => history.redo()" :disabled="!(history.canRedo())">
+        @click.stop="$emit('redo')" :disabled="!(historyState.canRedo())">
         <md-icon> redo </md-icon>
       </md-button>
     </span>
@@ -27,7 +27,7 @@
 import Vue from 'vue'
 
 export default Vue.extend({
-  props: ['current-graph-name', 'graph-stack', 'history']
+  props: ['current-graph-name', 'graph-stack', 'historyState']
 })
 </script>
 
@@ -53,6 +53,7 @@ export default Vue.extend({
 .graph-chip {
   border-radius: 3px;
   padding: 0px 6px;
+  user-select: none;
 }
 
 .graph-chip:hover {

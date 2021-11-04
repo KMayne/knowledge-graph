@@ -1,8 +1,10 @@
 <template>
   <path :d="pathSpec"
+        :style="{ transform: `scale(${scale})` }"
         :tabindex="0" :class="{ 'show-hover': !noHover, selected }"
         @keydown="handleKeyDown"
         @focus="$emit('focus')"
+        @touchstart="$emit('focus')"
         @blur="$emit('blur')"
   />
 </template>
@@ -14,13 +16,13 @@ import Vue from 'vue';
 const ARROW_SIZE = 16;
 export default Vue.extend({
   name: 'Edge',
-  props: ['edge', 'noHover', 'selected'],
+  props: ['edge', 'noHover', 'selected', 'offsetX', 'offsetY', 'scale'],
   methods: {
     handleKeyDown(e: KeyboardEvent) {
       if (e.code === 'Delete') {
         this.$emit('action', new EdgeAction(this.edge, EdgeActionType.Delete));
       }
-    },
+    }
   },
   computed: {
     pathSpec() {
@@ -60,10 +62,10 @@ export default Vue.extend({
             );
         }
       })();
-      return `M${fromX},${fromY}
+      return `M${fromX + this.offsetX},${fromY + this.offsetY}
               l${preArrowPoint.join(',')}
               ${arrowSvg}
-              L${toX},${toY}`
+              L${toX + this.offsetX},${toY + this.offsetY}`;
     }
   }
 });
@@ -77,6 +79,7 @@ path {
   fill: white;
   stroke-linecap: butt;
   stroke-width: 3px;
+  transform-origin: 50vw 50vh;
 }
 
 path.show-hover:hover:not(:focus) {

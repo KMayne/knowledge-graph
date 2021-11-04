@@ -1,20 +1,23 @@
 <template>
-  <section ref="graphArea" class="graph-area" :style="{ backgroundPosition }"
+  <section ref="graphArea" class="graph-area" :style="graphAreaStyle"
     @touchstart.stop="handleTouchStart"
     @mousedown="handleMouseDown"
     @dblclick="makeNewNode"
-    @blur="handleBackgroundDragStop">
+    @blur="handleBackgroundDragStop"
+    @wheel="handleMouseWheel">
     <svg class="edges">
       <Edge v-for="edge in edgesWithPositions"
       :key="edge.fromId + edge.toId"
       :edge="edge" @action="a => $emit('action', a)"
+      :offsetX="offsetX" :offsetY="offsetY" :scale="scale"
       :selected="selectedEdge === edge.id"
-      @focus="selectedEdge = edge.id"/>
-      <Edge v-if="liveEdge" :edge="liveEdge" :noHover="true" />
+      @focus="selectedEdge = edge.id"  />
+      <Edge v-if="liveEdge" :edge="liveEdge" :noHover="true"
+        :offsetX="offsetX" :offsetY="offsetY" :scale="scale" />
     </svg>
     <Node v-for="node in graph.nodes"
       :key="node.id" :node-data="node"
-      :offsetX="offsetX" :offsetY="offsetY"
+      :offsetX="offsetX" :offsetY="offsetY" :scale="scale"
       :activateOnMount="nodeToFocus === node.id"
       :selected="selectedNodeId === node.id"
       @mounted="() => handleNodeMount(node.id)"
@@ -35,7 +38,7 @@ import Vue from 'vue';
 import NodeComponent from './Node.vue';
 import EdgeComponent from './Edge.vue';
 import PropertyPanel from './PropertyPanel.vue';
-import { getRectCentre, getClippedCentreJoiningLine, NodeAction, NodeActionType, NodeData } from '@/Node';
+import { getRectCentre, getClippedCentreJoiningLine, NodeAction, NodeActionType, NodeData, Coords } from '@/Node';
 import { Edge, EdgeAction, EdgeActionType, EdgeDirection } from '@/Edge';
 
 type PositionedEdge = ({
@@ -61,14 +64,40 @@ export default Vue.extend({
       liveEdge: null as PositionedEdge | null,
       selectedEdge: null as string | null,
       selectedNodeId: null as string | null,
+      scale: 1,
       offsetX: 0,
       offsetY: 0,
-      lastTouch: null as Touch | null
+      lastTouches: null as TouchList | null,
+      lastMousePos: null as Coords | null,
+      moveVelocity: null as Coords | null,
+      currentAnimation: null as number | null,
+      mousePos: { x: 0, y: 0 }
     }
   },
   methods: {
+    // There's like 3 different ways scaling and offsets are dealt with and it's gross
+    // but it works and features take priority
+    canvasToScreenCoords(c: Coords): Coords {
+      const boundingRect = (this?.$refs?.graphArea as HTMLElement)?.getBoundingClientRect()
+        || { width: 0, height: 0 };
+      return {
+        x: (c.x + this.offsetX) * this.scale - (boundingRect.width / 2 * (this.scale - 1)),
+        y: (c.y + this.offsetY) * this.scale - (boundingRect.height / 2 * (this.scale - 1))
+      }
+    },
+    screenToCanvasCoords(c: Coords): Coords {
+      const boundingRect = (this?.$refs?.graphArea as HTMLElement).getBoundingClientRect();
+      return {
+        x: (c.x + (boundingRect.width / 2 * (this.scale - 1))) / this.scale - this.offsetX,
+        y: (c.y + (boundingRect.height / 2 * (this.scale - 1))) / this.scale - this.offsetY
+      };
+    },
+    getMouseCanvasCoords(e: MouseEvent) {
+      const boundingRect = (this?.$refs?.graphArea as HTMLElement).getBoundingClientRect();
+      return this.screenToCanvasCoords({ x: e.clientX - boundingRect.x, y: e.clientY - boundingRect.y });
+    },
     makeNewNode(e: MouseEvent) {
-      const [x, y] = [e.offsetX, e.offsetY]
+      const { x, y } = this.getMouseCanvasCoords(e);
       const newId = this.graph.generateId();
       this.$emit('action', new NodeAction({
         id: newId,
@@ -86,23 +115,22 @@ export default Vue.extend({
     },
     handleStartEdge(id: string) {
       const { x, y } = getRectCentre(this.graph.getNode(id));
-      const [nodeCenterX, nodeCenterY] = [x + this.offsetX, y + this.offsetY]
       this.selectedEdge = null;
       this.liveEdge = {
         id: this.graph.generateId(),
         direction: EdgeDirection.Undirected,
         fromId: id, toId: '',
-        fromX: nodeCenterX, fromY: nodeCenterY,
-        toX: nodeCenterX, toY: nodeCenterY
+        fromX: x, fromY: y,
+        toX: x, toY: y
       };
       document.addEventListener('mousemove', this.handleLiveEdgeMouseMove);
       document.addEventListener('mouseup', this.handleEdgeMouseUp)
     },
     handleLiveEdgeMouseMove(e: MouseEvent) {
       if (!this.liveEdge) return;
-      const boundingRect = (this?.$refs?.graphArea as HTMLElement).getBoundingClientRect();
-      this.liveEdge.toX = e.clientX - boundingRect.x;
-      this.liveEdge.toY = e.clientY - boundingRect.y;
+      const { x, y } = this.getMouseCanvasCoords(e);
+      this.liveEdge.toX = x
+      this.liveEdge.toY = y;
     },
     handleEdgeMouseUp(e: MouseEvent) {
       document.removeEventListener('mousemove', this.handleLiveEdgeMouseMove);
@@ -119,38 +147,79 @@ export default Vue.extend({
       }
       this.liveEdge = null;
     },
-    handleMouseDown() {
+    handleMouseDown(e: MouseEvent) {
       this.selectedNodeId = null;
       this.selectedEdge = null;
+      this.lastMousePos = { x: e.clientX, y: e.clientY };
       document.addEventListener('mousemove', this.handleBackgroundDrag);
       document.addEventListener('mouseup', this.handleBackgroundDragStop);
     },
     handleTouchStart(e: TouchEvent) {
-      e.preventDefault();
       this.selectedNodeId = null;
       this.selectedEdge = null;
-      if (e.touches.length > 1) return false;
-      this.lastTouch = e.touches[0];
+      if (e.touches.length > 1) {
+        if (e.touches.length > 2) return false;
+        // TODO: Add pinch zoom
+        // document.addEventListener('touchmove', )
+        return;
+      }
+      this.lastTouches = e.touches;
       document.addEventListener('touchmove', this.handleBackgroundTouchDrag);
       document.addEventListener('touchend', this.handleBackgroundDragStop);
       document.addEventListener('touchcancel', this.handleBackgroundDragStop);
     },
     handleBackgroundDrag(e: MouseEvent) {
-      this.offsetX += e.movementX;
-      this.offsetY += e.movementY;
+      if (!this?.lastMousePos) {
+        this.handleBackgroundDragStop();
+        throw new Error('Bad mouse state');
+      }
+      const vx = e.clientX - this.lastMousePos.x;
+      const vy = e.clientY - this.lastMousePos.y;
+      this.offsetX += vx / this.scale;
+      this.offsetY += vy / this.scale;
+      this.moveVelocity = { x: vx, y: vy };
+      this.lastMousePos = { x: e.clientX, y: e.clientY };
     },
     handleBackgroundTouchDrag(e: TouchEvent) {
+      if (!this?.lastTouches) {
+        this.handleBackgroundDragStop();
+        throw new Error('Bad touch state');
+      }
       if (e.touches.length > 1) this.handleBackgroundDragStop();
       const currentTouch = e.touches[0];
-      this.offsetX += this.lastTouch?.clientX ? (currentTouch.clientX - this.lastTouch?.clientX) : 0;
-      this.offsetY += this.lastTouch?.clientY ? (currentTouch.clientY - this.lastTouch?.clientY) : 0;
-      this.lastTouch = currentTouch;
+      const vx = currentTouch.clientX - this.lastTouches[0].clientX;
+      const vy = currentTouch.clientY - this.lastTouches[0].clientY;
+      this.offsetX += vx / this.scale;
+      this.offsetY += vy / this.scale;
+      this.moveVelocity = { x: vx, y: vy };
+      this.lastTouches = e.touches;
+    },
+    animateBackgroundPosition(vx: number, vy: number) {
+      if (this.currentAnimation) clearTimeout(this.currentAnimation);
+      if (vx === 0 && vy === 0) return;
+      const FRAME_RATE = 60; // FPS
+      const DURATION = 1.5;
+      const SPEED_FACTOR = 4;
+      const startingOffset = { x: this.offsetX, y: this.offsetY };
+      const easeOutQuart = (x: number) => 1 - Math.pow(1 - x, 4);
+      const runAnimation = (iterations: number) => {
+        if (iterations <= 0) return this.currentAnimation = null;
+        const progress = easeOutQuart(1 - iterations / (DURATION * FRAME_RATE));
+        this.offsetX = startingOffset.x + vx * progress * SPEED_FACTOR;
+        this.offsetY = startingOffset.y + vy * progress * SPEED_FACTOR;
+        this.currentAnimation = setTimeout(runAnimation, 1 / FRAME_RATE, iterations - 1)
+      }
+      runAnimation(DURATION * FRAME_RATE);
     },
     handleBackgroundDragStop() {
-        document.removeEventListener('mousemove', this.handleBackgroundDrag);
-        document.removeEventListener('touchmove', this.handleBackgroundTouchDrag);
-        document.removeEventListener('mouseup', this.handleBackgroundDragStop);
-        this.lastTouch = null;
+      document.removeEventListener('mousemove', this.handleBackgroundDrag);
+      document.removeEventListener('touchmove', this.handleBackgroundTouchDrag);
+      document.removeEventListener('mouseup', this.handleBackgroundDragStop);
+      if (this.moveVelocity) {
+        this.animateBackgroundPosition(this.moveVelocity.x, this.moveVelocity.y);
+      }
+      this.lastTouches = null;
+      this.moveVelocity = null;
     },
     elementWithinNode(element: HTMLElement | null): boolean {
       if (element === null) return false;
@@ -167,7 +236,13 @@ export default Vue.extend({
     updateSelectedNode(id: string | null) {
       this.selectedNodeId = id;
       this.selectedEdge = null;
+    },
+    handleMouseWheel(e: WheelEvent) {
+      this.scale = Math.max(0.5, Math.min(2, this.scale + e.deltaY * 0.001));
     }
+  },
+  mounted() {
+    document.addEventListener('wheel', this.handleMouseWheel);
   },
   computed: {
     edgesWithPositions(): PositionedEdge[] {
@@ -177,10 +252,10 @@ export default Vue.extend({
         const { fromX, fromY, toX, toY} = getClippedCentreJoiningLine(fromNode, toNode);
         return {
           ...edge,
-          fromX: fromX + this.offsetX,
-          fromY: fromY + this.offsetY,
-          toX: toX + this.offsetX,
-          toY: toY + this.offsetY
+          fromX: fromX,
+          fromY: fromY,
+          toX: toX,
+          toY: toY
         };
      });
     },
@@ -194,8 +269,13 @@ export default Vue.extend({
              : this.selectedEdge ? 'edge'
              : '';
     },
-    backgroundPosition(): string {
-      return `${this.offsetX}px ${this.offsetY}px`;
+    graphAreaStyle() {
+      return {
+        backgroundImage: `radial-gradient(#616161 ${1 + 0.5 * this.scale}px, transparent 0)`,
+        backgroundSize: `${36 * this.scale}px ${36 * this.scale}px`,
+        backgroundPosition:  `calc(${this.offsetX * this.scale}px + calc(100vw * ${0.5 - this.scale})) `
+          + `calc(${this.offsetY * this.scale}px + calc(100vh * ${0.5 - this.scale})`,
+      };
     }
   }
 });
@@ -206,8 +286,6 @@ export default Vue.extend({
   width: 100%;
   height: 100%;
   background: white;
-  background-image: radial-gradient(#616161 1px, transparent 0);
-  background-size: 36px 36px;
   position: relative;
 }
 

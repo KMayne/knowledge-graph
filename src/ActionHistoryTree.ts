@@ -12,7 +12,12 @@ class HistoryNode {
   }
 }
 
-export class ActionHistoryTree {
+export interface HistoryState {
+  canUndo(): boolean;
+  canRedo(): boolean;
+}
+
+export class ActionHistoryTree implements HistoryState {
   private currentState: HistoryNode;
   private actionProcessor: ActionProcessor;
   private lastActionTime?: Date;

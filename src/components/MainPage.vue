@@ -1,7 +1,7 @@
 <template>
   <div>
-    <Toolbar :history="history" :graph-stack="graphStack" :current-graph-name="graph.name"
-      @graphClicked="graphId => popToGraph(graphId)"></Toolbar>
+    <Toolbar :historyState="history" :graph-stack="graphStack" :current-graph-name="graph.name"
+      @graphClicked="graphId => popToGraph(graphId)" @undo="undo" @redo="redo"></Toolbar>
     <Graph :graph="graph"
       @openGraph="openGraph"
       @action="handleAction"></Graph>
@@ -22,8 +22,8 @@ export default Vue.extend({
   mounted() {
     window.addEventListener('keypress', e => {
       if (e.ctrlKey && e.code === 'KeyZ') {
-        if (e.shiftKey && this.history.canRedo()) this.history.redo();
-        else if (this.history.canUndo()) this.history.undo();
+        if (e.shiftKey && this.history.canRedo()) this.redo();
+        else if (this.history.canUndo()) this.undo();
       }
     });
   },
@@ -53,6 +53,14 @@ export default Vue.extend({
     },
     handleAction(action: Action) {
       this.history.applyAction(action);
+      this.saveGraph();
+    },
+    undo() {
+      this.history.undo();
+      this.saveGraph();
+    },
+    redo() {
+      this.history.redo();
       this.saveGraph();
     },
     saveGraph(): void {

@@ -22,7 +22,7 @@ import { NodeAction, NodeActionType, NodeChange } from '../Node';
 
 export default Vue.extend({
   name: 'Node',
-  props: ['nodeData', 'activateOnMount', 'selected', 'offsetX', 'offsetY'],
+  props: ['nodeData', 'activateOnMount', 'selected', 'offsetX', 'offsetY', 'scale'],
   data: () => ({
     editMode: false,
     hasMoved: false,
@@ -31,8 +31,13 @@ export default Vue.extend({
       x: 0,
       y: 0
     },
-    nodeText: ''
+    nodeText: '',
   }),
+  filters: {
+    formatCoord(num: number) {
+      return num.toFixed().toString();
+    }
+  },
   mounted() {
     this.nodeText = this.nodeData.text;
     if (this.activateOnMount) { this.startEdit(); }
@@ -114,8 +119,8 @@ export default Vue.extend({
     handleMove(moveX: number, moveY: number) {
       this.hasMoved = true;
       this.focus();
-      const deltaX = moveX - this.mousePageOffset.x;
-      const deltaY = moveY - this.mousePageOffset.y;
+      const deltaX = (moveX - this.mousePageOffset.x) / this.scale;
+      const deltaY = (moveY - this.mousePageOffset.y) / this.scale;
       this.mousePageOffset = { x: moveX, y: moveY };
       const x = this.nodeData.x;
       const y = this.nodeData.y;
@@ -123,7 +128,7 @@ export default Vue.extend({
         `move[${this.nodeData.id}`));
     },
     handleKeyDown(e: KeyboardEvent) {
-      if (e.code === 'Delete') {
+      if ((e.code === 'Delete' || e.code === 'Backspace') && document.activeElement !== this.$refs.textBox) {
         this.$emit('action', new NodeAction(this.nodeData, NodeActionType.Delete));
       } else if (e.code === 'Enter') {
         if (e.ctrlKey) {
@@ -168,10 +173,11 @@ export default Vue.extend({
     nodeStyle() {
       const r = this.nodeData;
       return {
-        left: (r.x + this.offsetX) + 'px',
-        top: (r.y + this.offsetY) + 'px',
+        left: (r.x + this.offsetX) * this.scale + 'px',
+        top: (r.y + this.offsetY) * this.scale + 'px',
         width: r.width + 'px',
         height: r.height + 'px',
+        transform: `scale(${this.scale})`,
       };
     }
   }
@@ -185,6 +191,7 @@ export default Vue.extend({
   resize: both;
   overflow: hidden;
   font-family: 'Rubik', sans-serif;
+  transform-origin: 50vw 50vh;
 }
 
 .node::-webkit-resizer {

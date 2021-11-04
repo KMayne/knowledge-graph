@@ -1,31 +1,42 @@
-Visual:
-* Improve sidebar styling ✅
-* Add proper app bar ✅
-* Improve visibility of subgraphs
-
 Usability:
-* Add sidebar for editing additional data  ✅
-* Add panning/zoom
-* Add minimap
-* Store data in PouchDB
-* Sync PouchDB to CouchDB
-* Add Google login
+* Add cross-device sync via OAuth login
 * Improve usability on mobile
 * Add search for nodes in all graphs and layers
+* Add minimap
 * Display reflexive relationships properly
 * Add some kind of navigation for switching to different graphs
-* Automatically arrange nodes
+* Add a way to automatically arrange nodes
+* View virtual layer membership in property panel (where applicable)
+* View related nodes in property panel
+* View path for complex relationships
+* Add property panel for editing additional data  ✅
+* Edit node/edge data in a property panel ✅
+* Add panning/zoom ✅
 
 Utility:
-* Different node data types (can have multiple types on one node)
-* Introduce concept of (virtual) layers
-* Add directional relationships ✅
+* Add a way to get information into Tree from external services
+* Add ability to include application metadata on edges
+* Add ability to include application metadata on nodes
+* Add ability to include arbitrary metadata on edges (ideally defined by some schemas)
+* Add ability to include arbitrary metadata on nodes (ideally defined by some schemas)
+* Introduce computational nodes
 * Allow visual transformations of same content
+* Introduce concept of (virtual) layers
+* Add a way to share subtrees with other people
 * Add history graph and allow traversing to arbitrary points in the graph
 * Add layer graph
+* Add directional relationships ✅
 
-Property panel:
-* Edit node/edge data ✅
-* View path?
-* View virtual layer membership (where applicable)
-* View related nodes
+Visual:
+* Give nodes momentum
+* Improve visibility of subgraphs
+* Improve sidebar styling ✅
+* Add proper app bar ✅
+
+Bugs
+🐛 Fix bug where node created in wrong position when scaled ✅
+🐛 Fix live edge ✅
+🐛 Fix undo/redo not saving graph ✅
+🐛 Fix ability to delete nodes & edges ✅
+🐛 Fix bug where edit mode is inconsistent & double clicking with mouse sometimes selects but does not edit
+🐛 Fix bug where property panel doesn't show ✅

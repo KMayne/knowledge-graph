@@ -1,5 +1,6 @@
 <template>
-<md-content md-tag="aside" class="panel md-elevation-4" @mousedown.stop @click.stop @dblclick.stop>
+<md-content md-tag="aside" class="panel md-elevation-4"
+  @mousedown.stop @click.stop @dblclick.stop @touchstart.stop>
   <node-detail v-if="targetType === 'node'" :node="target" :graph="graph"
     @action="a => $emit('action', a)"></node-detail>
   <edge-detail v-if="targetType === 'edge'" :edge="target" :graph="graph"

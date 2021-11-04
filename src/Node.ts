@@ -1,7 +1,7 @@
 import { Action, ActionType } from './Action'
 import { KnowledgeGraphModel } from './KnowledgeGraphModel';
 
-interface Coords {
+export interface Coords {
   x: number,
   y: number
 }
