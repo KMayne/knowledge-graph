@@ -71,7 +71,8 @@ export default Vue.extend({
       lastMousePos: null as Coords | null,
       moveVelocity: null as Coords | null,
       currentAnimation: null as number | null,
-      mousePos: { x: 0, y: 0 }
+      mousePos: { x: 0, y: 0 },
+      movedSinceTap: false
     }
   },
   methods: {
@@ -148,15 +149,13 @@ export default Vue.extend({
       this.liveEdge = null;
     },
     handleMouseDown(e: MouseEvent) {
-      this.selectedNodeId = null;
-      this.selectedEdge = null;
       this.lastMousePos = { x: e.clientX, y: e.clientY };
+      this.movedSinceTap = false;
       document.addEventListener('mousemove', this.handleBackgroundDrag);
       document.addEventListener('mouseup', this.handleBackgroundDragStop);
     },
     handleTouchStart(e: TouchEvent) {
-      this.selectedNodeId = null;
-      this.selectedEdge = null;
+      this.movedSinceTap = false;
       if (e.touches.length > 1) {
         if (e.touches.length > 2) return false;
         // TODO: Add pinch zoom
@@ -179,6 +178,7 @@ export default Vue.extend({
       this.offsetY += vy / this.scale;
       this.moveVelocity = { x: vx, y: vy };
       this.lastMousePos = { x: e.clientX, y: e.clientY };
+      this.movedSinceTap = true;
     },
     handleBackgroundTouchDrag(e: TouchEvent) {
       if (!this?.lastTouches) {
@@ -193,6 +193,7 @@ export default Vue.extend({
       this.offsetY += vy / this.scale;
       this.moveVelocity = { x: vx, y: vy };
       this.lastTouches = e.touches;
+      this.movedSinceTap = true;
     },
     animateBackgroundPosition(vx: number, vy: number) {
       if (this.currentAnimation) clearTimeout(this.currentAnimation);
@@ -220,6 +221,9 @@ export default Vue.extend({
       }
       this.lastTouches = null;
       this.moveVelocity = null;
+      if (!this.movedSinceTap) {
+        this.updateSelectedNode(null);
+      }
     },
     elementWithinNode(element: HTMLElement | null): boolean {
       if (element === null) return false;

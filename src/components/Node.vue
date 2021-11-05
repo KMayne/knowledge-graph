@@ -59,6 +59,7 @@ export default Vue.extend({
       // If we're not dragging the textbox, then we must be using the resize handle
       // so allow the default operation
       if ((e?.target as HTMLElement).tagName !== 'P') return true;
+      e.stopPropagation();
 
       this.dragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
       document.addEventListener('touchmove', this.handleTouchMove);
