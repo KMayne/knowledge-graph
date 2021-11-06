@@ -148,6 +148,7 @@ export default Vue.extend({
       this.liveEdge = null;
     },
     handleMouseDown(e: MouseEvent) {
+      if (this.currentAnimation) clearTimeout(this.currentAnimation);
       this.selectedNodeId = null;
       this.selectedEdge = null;
       this.lastMousePos = { x: e.clientX, y: e.clientY };
@@ -155,6 +156,7 @@ export default Vue.extend({
       document.addEventListener('mouseup', this.handleBackgroundDragStop);
     },
     handleTouchStart(e: TouchEvent) {
+      if (this.currentAnimation) clearTimeout(this.currentAnimation);
       this.selectedNodeId = null;
       this.selectedEdge = null;
       if (e.touches.length > 1) {
