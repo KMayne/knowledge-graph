@@ -142,7 +142,7 @@ export default Vue.extend({
           id: this.liveEdge.id,
           fromId: this.liveEdge.fromId,
           toId: this.liveEdge.toId,
-          direction: EdgeDirection.Undirected
+          direction: this.liveEdge.direction
         }, EdgeActionType.Create))
       }
       this.liveEdge = null;
