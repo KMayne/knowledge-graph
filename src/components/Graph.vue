@@ -118,7 +118,7 @@ export default Vue.extend({
       this.selectedEdge = null;
       this.liveEdge = {
         id: this.graph.generateId(),
-        direction: EdgeDirection.Undirected,
+        direction: EdgeDirection.Directional,
         fromId: id, toId: '',
         fromX: x, fromY: y,
         toX: x, toY: y
