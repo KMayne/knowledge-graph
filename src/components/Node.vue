@@ -13,17 +13,20 @@
       @input="handleInput" @blur="handleTextBoxBlur">
       {{ nodeText }}
     </p>
+    <md-icon v-if="icon" class="type-icon"> {{icon}} </md-icon>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
-import { NodeAction, NodeActionType, NodeChange } from '../Node';
+import { NodeAction, NodeActionType, NodeChange, NodeType } from '../Node';
+const DOUBLE_CLICK_THRESHOLD = 500;
 
 export default Vue.extend({
   name: 'Node',
   props: ['nodeData', 'activateOnMount', 'selected', 'offsetX', 'offsetY', 'scale'],
   data: () => ({
+    lastTap: 0,
     editMode: false,
     hasMoved: false,
     isBeingDragged: false,
@@ -56,6 +59,15 @@ export default Vue.extend({
         { text: (e?.target as HTMLElement).innerText }, `text-change[${this.nodeData.id}`));
     },
     handleTouchStart(e: TouchEvent) {
+      const tapTime = new Date().getTime();
+      if (this.nodeData.type === NodeType.Folder
+        && (tapTime - this.lastTap) < DOUBLE_CLICK_THRESHOLD) {
+        this.$emit('openGraph');
+        e.preventDefault();
+        return;
+      }
+      this.lastTap = tapTime;
+
       // If we're not dragging the textbox, then we must be using the resize handle
       // so allow the default operation
       if ((e?.target as HTMLElement).tagName !== 'P') return true;
@@ -67,6 +79,14 @@ export default Vue.extend({
       if (!this.editMode) e.preventDefault();
     },
     handleMouseDown(e: MouseEvent) {
+      const tapTime = new Date().getTime();
+      if (this.nodeData.type === NodeType.Folder && (tapTime - this.lastTap) < DOUBLE_CLICK_THRESHOLD) {
+        this.$emit('openGraph');
+        e.preventDefault();
+        return;
+      }
+      this.lastTap = tapTime;
+
       if (e.altKey) {
         this.$emit('startEdge');
         return;
@@ -179,6 +199,9 @@ export default Vue.extend({
         height: r.height + 'px',
         transform: `scale(${this.scale})`,
       };
+    },
+    icon() {
+      return this.nodeData.type === NodeType.Folder ? 'folder' : undefined;
     }
   }
 });
@@ -222,5 +245,11 @@ export default Vue.extend({
   padding: 15px 10px;
   outline: 0px solid transparent;
   user-select: none;
+}
+
+.type-icon {
+  position: absolute;
+  bottom: 0;
+  right: 0;
 }
 </style>

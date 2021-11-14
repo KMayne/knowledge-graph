@@ -1,6 +1,6 @@
 import { AbstractActionProcessor, Action, ActionProcessor, ActionType } from "./Action";
 import { Edge, EdgeAction, EdgeChange, EdgeActionType } from './Edge';
-import { NodeAction, NodeActionType, NodeChange, NodeData } from "./Node";
+import { NodeAction, NodeActionType, NodeChange, NodeData, NodeType } from "./Node";
 
 export interface Graph {
   name: string;
@@ -107,7 +107,10 @@ export class KnowledgeGraphModel extends AbstractActionProcessor implements Grap
           const nodeAction = action as NodeAction;
           switch (nodeAction.subType) {
             case NodeActionType.Create: return this.nodes.push(nodeAction.node);
-            case NodeActionType.Delete: return this.replaceNode(nodeAction.node.id, () => undefined);
+            case NodeActionType.Delete:
+              // Cannot delete built-in nodes
+              if (nodeAction.node.type === NodeType.BuiltIn) return;
+              return this.replaceNode(nodeAction.node.id, () => undefined);
           }
         },
         undo: (action: Action) => {

@@ -13,6 +13,22 @@ interface Rect {
   height: number;
 }
 
+export enum NodeType {
+  Normal,
+  Folder,
+  BuiltIn
+}
+
+export const UserNodeTypes = [
+  NodeType.Normal,
+  NodeType.Folder
+];
+
+type NodeSubType = BuiltIn;
+enum BuiltIn {
+  Integrations
+}
+
 export interface NodeData {
   id: string;
   text: string;
@@ -21,6 +37,8 @@ export interface NodeData {
   width: number;
   height: number;
   graph?: KnowledgeGraphModel
+  type: NodeType;
+  subType?: NodeSubType;
 }
 
 export interface NodeFragement {
@@ -29,6 +47,8 @@ export interface NodeFragement {
   y?: number
   width?: number,
   height?: number,
+  type?: NodeType,
+  subType?: NodeSubType
 }
 
 export class NodeChange implements Action {

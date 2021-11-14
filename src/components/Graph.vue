@@ -38,7 +38,7 @@ import Vue from 'vue';
 import NodeComponent from './Node.vue';
 import EdgeComponent from './Edge.vue';
 import PropertyPanel from './PropertyPanel.vue';
-import { getRectCentre, getClippedCentreJoiningLine, NodeAction, NodeActionType, NodeData, Coords } from '@/Node';
+import { getRectCentre, getClippedCentreJoiningLine, NodeAction, NodeActionType, NodeData, Coords, NodeType } from '@/Node';
 import { Edge, EdgeAction, EdgeActionType, EdgeDirection } from '@/Edge';
 
 type PositionedEdge = ({
@@ -102,6 +102,7 @@ export default Vue.extend({
       this.$emit('action', new NodeAction({
         id: newId,
         text: '',
+        type: NodeType.Normal,
         // We want node to be centered at coords
         x: x - DEFAULT_WIDTH / 2,
         y: y - DEFAULT_HEIGHT / 2,

@@ -15,6 +15,7 @@ import GraphComponent from './Graph.vue';
 import ToolbarComponent from './Toolbar.vue';
 import { KnowledgeGraphModel } from '@/KnowledgeGraphModel';
 import { Action } from '@/Action';
+import { NodeType } from '@/Node';
 
 export default Vue.extend({
   name: 'MainPage',
@@ -35,6 +36,7 @@ export default Vue.extend({
       y: 50,
       width: 100,
       height: 80,
+      type: NodeType.Normal
     }]);
     return {
       rootGraphId: rootGraph.id,
