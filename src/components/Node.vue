@@ -215,6 +215,9 @@ export default Vue.extend({
   overflow: hidden;
   font-family: 'Rubik', sans-serif;
   transform-origin: 50vw 50vh;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
 }
 
 .node::-webkit-resizer {
@@ -236,7 +239,6 @@ export default Vue.extend({
 .text-box {
   cursor: default;
   width: 100%;
-  height: 100%;
   border: none;
   box-sizing: border-box;
   text-align: center;
