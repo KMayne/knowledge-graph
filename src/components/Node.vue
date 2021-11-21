@@ -11,7 +11,7 @@
     <p :contenteditable="editMode"
       ref="textBox" type="text" class="text-box"
       @input="handleInput" @blur="handleTextBoxBlur">
-      {{ nodeText }}
+      {{ nodeName }}
     </p>
     <md-icon v-if="icon" class="type-icon"> {{icon}} </md-icon>
   </div>
@@ -24,7 +24,7 @@ const DOUBLE_CLICK_THRESHOLD = 500;
 
 export default Vue.extend({
   name: 'Node',
-  props: ['nodeData', 'activateOnMount', 'selected', 'offsetX', 'offsetY', 'scale'],
+  props: ['nodeMetadata', 'activateOnMount', 'selected', 'offsetX', 'offsetY', 'scale'],
   data: () => ({
     lastTap: 0,
     editMode: false,
@@ -34,7 +34,7 @@ export default Vue.extend({
       x: 0,
       y: 0
     },
-    nodeText: '',
+    nodeName: '',
   }),
   filters: {
     formatCoord(num: number) {
@@ -42,25 +42,25 @@ export default Vue.extend({
     }
   },
   mounted() {
-    this.nodeText = this.nodeData.text;
+    this.nodeName = this.nodeMetadata.name;
     if (this.activateOnMount) { this.startEdit(); }
     this.$emit('mounted');
   },
   watch: {
-    nodeData() {
+    nodeMetadata() {
       if (!this.editMode) {
-        this.nodeText = this.nodeData.text;
+        this.nodeName = this.nodeMetadata.name;
       }
     }
   },
   methods: {
     handleInput(e: InputEvent) {
-      this.$emit('action', new NodeChange(this.nodeData.id, { text: this.nodeData.text },
-        { text: (e?.target as HTMLElement).innerText }, `text-change[${this.nodeData.id}`));
+      this.$emit('action', new NodeChange(this.nodeMetadata.id, { name: this.nodeMetadata.name },
+        { name: (e?.target as HTMLElement).innerText }, `name-change[${this.nodeMetadata.id}`));
     },
     handleTouchStart(e: TouchEvent) {
       const tapTime = new Date().getTime();
-      if (this.nodeData.type === NodeType.Folder
+      if (this.nodeMetadata.type === NodeType.Folder
         && (tapTime - this.lastTap) < DOUBLE_CLICK_THRESHOLD) {
         this.$emit('openGraph');
         e.preventDefault();
@@ -80,7 +80,8 @@ export default Vue.extend({
     },
     handleMouseDown(e: MouseEvent) {
       const tapTime = new Date().getTime();
-      if (this.nodeData.type === NodeType.Folder && (tapTime - this.lastTap) < DOUBLE_CLICK_THRESHOLD) {
+      if (this.nodeMetadata.type === NodeType.Folder
+        && (tapTime - this.lastTap) < DOUBLE_CLICK_THRESHOLD) {
         this.$emit('openGraph');
         e.preventDefault();
         return;
@@ -105,10 +106,11 @@ export default Vue.extend({
     },
     handleResize(e: MouseEvent) {
       const node = this.$refs?.node as HTMLElement;
-      if (node.scrollWidth !== this.nodeData.width || node.scrollHeight !== this.nodeData.height) {
-        this.$emit('action', new NodeChange(this.nodeData.id,
-          { width: this.nodeData.width, height: this.nodeData.height },
-          { width: node.scrollWidth, height: node.scrollHeight }, `resize[${this.nodeData.id}`)
+      if (node.scrollWidth !== this.nodeMetadata.width
+        || node.scrollHeight !== this.nodeMetadata.height) {
+        this.$emit('action', new NodeChange(this.nodeMetadata.id,
+          { width: this.nodeMetadata.width, height: this.nodeMetadata.height },
+          { width: node.scrollWidth, height: node.scrollHeight }, `resize[${this.nodeMetadata.id}`)
         );
       }
       if (e.type === 'mouseup') {
@@ -134,7 +136,10 @@ export default Vue.extend({
         this.editMode = true;
       }
     },
-    handleTouchMove(e: TouchEvent) { this.handleMove(e.touches[0].clientX, e.touches[0].clientY); return false; },
+    handleTouchMove(e: TouchEvent) {
+      this.handleMove(e.touches[0].clientX, e.touches[0].clientY);
+      return false;
+    },
     handleMouseMove(e: MouseEvent) { this.handleMove(e.clientX, e.clientY); return false; },
     handleMove(moveX: number, moveY: number) {
       this.hasMoved = true;
@@ -142,14 +147,17 @@ export default Vue.extend({
       const deltaX = (moveX - this.mousePageOffset.x) / this.scale;
       const deltaY = (moveY - this.mousePageOffset.y) / this.scale;
       this.mousePageOffset = { x: moveX, y: moveY };
-      const x = this.nodeData.x;
-      const y = this.nodeData.y;
-      this.$emit('action', new NodeChange(this.nodeData.id, { x, y }, { x: x + deltaX, y: y + deltaY },
-        `move[${this.nodeData.id}`));
+      const x = this.nodeMetadata.x;
+      const y = this.nodeMetadata.y;
+      this.$emit('action',
+        new NodeChange(this.nodeMetadata.id,
+        { x, y }, { x: Math.round(x + deltaX), y: Math.round(y + deltaY) },
+        `move[${this.nodeMetadata.id}`));
     },
     handleKeyDown(e: KeyboardEvent) {
-      if ((e.code === 'Delete' || e.code === 'Backspace') && document.activeElement !== this.$refs.textBox) {
-        this.$emit('action', new NodeAction(this.nodeData, NodeActionType.Delete));
+      if ((e.code === 'Delete' || e.code === 'Backspace')
+        && document.activeElement !== this.$refs.textBox) {
+        this.$emit('action', new NodeAction(this.nodeMetadata, NodeActionType.Delete));
       } else if (e.code === 'Enter') {
         if (e.ctrlKey) {
           this.$emit('openGraph');
@@ -191,7 +199,7 @@ export default Vue.extend({
   },
   computed: {
     nodeStyle() {
-      const r = this.nodeData;
+      const r = this.nodeMetadata;
       return {
         left: (r.x + this.offsetX) * this.scale + 'px',
         top: (r.y + this.offsetY) * this.scale + 'px',
@@ -201,7 +209,7 @@ export default Vue.extend({
       };
     },
     icon() {
-      return this.nodeData.type === NodeType.Folder ? 'folder' : undefined;
+      return this.nodeMetadata?.type === NodeType.Folder ? 'folder' : undefined;
     }
   }
 });

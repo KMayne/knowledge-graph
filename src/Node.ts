@@ -1,5 +1,6 @@
 import { Action, ActionType } from './Action'
 import { KnowledgeGraphModel } from './KnowledgeGraphModel';
+import { DataStore } from './SchemaGraph';
 
 export interface Coords {
   x: number,
@@ -29,9 +30,11 @@ enum BuiltIn {
   Integrations
 }
 
-export interface NodeData {
+export const DEFAULT_WIDTH = 150;
+export const DEFAULT_HEIGHT = 60;
+export interface NodeMetadata {
   id: string;
-  text: string;
+  name: string;
   x: number;
   y: number;
   width: number;
@@ -39,16 +42,18 @@ export interface NodeData {
   graph?: KnowledgeGraphModel
   type: NodeType;
   subType?: NodeSubType;
+  data: { [schemaId: string]: DataStore };
 }
 
 export interface NodeFragement {
-  text?: string,
+  name?: string,
   x?: number,
   y?: number
   width?: number,
   height?: number,
   type?: NodeType,
   subType?: NodeSubType
+  data?: { [schemaId: string]: DataStore }
 }
 
 export class NodeChange implements Action {
@@ -73,9 +78,9 @@ export enum NodeActionType {
 export class NodeAction implements Action {
   type: ActionType = ActionType.NodeExistanceChange;
   subType: NodeActionType
-  node: NodeData;
+  node: NodeMetadata;
 
-  constructor(node: NodeData, subType: NodeActionType) {
+  constructor(node: NodeMetadata, subType: NodeActionType) {
     this.node = node;
     this.subType = subType;
   }

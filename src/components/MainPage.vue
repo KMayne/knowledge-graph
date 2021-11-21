@@ -15,7 +15,8 @@ import GraphComponent from './Graph.vue';
 import ToolbarComponent from './Toolbar.vue';
 import { KnowledgeGraphModel } from '@/KnowledgeGraphModel';
 import { Action } from '@/Action';
-import { NodeType } from '@/Node';
+import { DEFAULT_HEIGHT, DEFAULT_WIDTH, NodeType } from '@/Node';
+import { newSchemaFromDefault } from '@/SchemaGraph';
 
 export default Vue.extend({
   name: 'MainPage',
@@ -31,12 +32,13 @@ export default Vue.extend({
   data: () => {
     const rootGraph = KnowledgeGraphModel.loadFromStorage([{
       id: Math.random().toString(16),
-      text: 'Hello',
-      x: 50,
-      y: 50,
-      width: 100,
-      height: 80,
-      type: NodeType.Normal
+      name: 'Hello',
+      x: 0,
+      y: 0,
+      width: DEFAULT_WIDTH,
+      height: DEFAULT_HEIGHT,
+      type: NodeType.Normal,
+      data: {}
     }]);
     return {
       rootGraphId: rootGraph.id,
@@ -49,7 +51,11 @@ export default Vue.extend({
     openGraph(nodeId: string) {
       this.graphStack.push(this.graph);
       const targetNode = this.graph.getNode(nodeId);
-      targetNode.graph = new KnowledgeGraphModel(targetNode.text, targetNode?.graph?.nodes || [], targetNode?.graph?.edges || []);
+      targetNode.graph = new KnowledgeGraphModel(
+        targetNode.name,
+        targetNode?.graph?.nodes || [],
+        targetNode?.graph?.edges || [],
+        newSchemaFromDefault());
       this.graph = targetNode.graph;
       this.history = new ActionHistoryTree(this.graph);
     },

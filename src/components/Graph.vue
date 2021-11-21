@@ -16,7 +16,7 @@
         :offsetX="offsetX" :offsetY="offsetY" :scale="scale" />
     </svg>
     <Node v-for="node in graph.nodes"
-      :key="node.id" :node-data="node"
+      :key="node.id" :node-metadata="node"
       :offsetX="offsetX" :offsetY="offsetY" :scale="scale"
       :activateOnMount="nodeToFocus === node.id"
       :selected="selectedNodeId === node.id"
@@ -38,8 +38,9 @@ import Vue from 'vue';
 import NodeComponent from './Node.vue';
 import EdgeComponent from './Edge.vue';
 import PropertyPanel from './PropertyPanel.vue';
-import { getRectCentre, getClippedCentreJoiningLine, NodeAction, NodeActionType, NodeData, Coords, NodeType } from '@/Node';
+import { getRectCentre, getClippedCentreJoiningLine, NodeAction, NodeActionType, NodeMetadata, Coords, NodeType, DEFAULT_WIDTH, DEFAULT_HEIGHT } from '@/Node';
 import { Edge, EdgeAction, EdgeActionType, EdgeDirection } from '@/Edge';
+import { generateNodeId } from '@/KnowledgeGraphModel';
 
 type PositionedEdge = ({
   fromX: number,
@@ -48,8 +49,6 @@ type PositionedEdge = ({
   toY?: number
 } & Edge);
 
-const DEFAULT_WIDTH = 100;
-const DEFAULT_HEIGHT = 60;
 export default Vue.extend({
   name: 'Graph',
   components: {
@@ -60,7 +59,7 @@ export default Vue.extend({
   props: ['graph'],
   data: () => {
     return {
-      nodeToFocus: null,
+      nodeToFocus: null as string | null,
       liveEdge: null as PositionedEdge | null,
       selectedEdge: null as string | null,
       selectedNodeId: null as string | null,
@@ -98,16 +97,17 @@ export default Vue.extend({
     },
     makeNewNode(e: MouseEvent) {
       const { x, y } = this.getMouseCanvasCoords(e);
-      const newId = this.graph.generateId();
+      const newId = generateNodeId();
       this.$emit('action', new NodeAction({
         id: newId,
-        text: '',
+        name: '',
         type: NodeType.Normal,
+        data: {},
         // We want node to be centered at coords
         x: x - DEFAULT_WIDTH / 2,
         y: y - DEFAULT_HEIGHT / 2,
         width: DEFAULT_WIDTH,
-        height: DEFAULT_HEIGHT
+        height: DEFAULT_HEIGHT,
       }, NodeActionType.Create));
       this.nodeToFocus = newId;
     },
@@ -118,7 +118,7 @@ export default Vue.extend({
       const { x, y } = getRectCentre(this.graph.getNode(id));
       this.selectedEdge = null;
       this.liveEdge = {
-        id: this.graph.generateId(),
+        id: generateNodeId(),
         direction: EdgeDirection.Directional,
         fromId: id, toId: '',
         fromX: x, fromY: y,
@@ -246,6 +246,9 @@ export default Vue.extend({
   },
   mounted() {
     document.addEventListener('wheel', this.handleMouseWheel);
+    const graphArea = this.$refs?.graphArea as HTMLElement;
+    this.offsetX = (graphArea.clientWidth) / 2 - DEFAULT_WIDTH / 2;
+    this.offsetY = (graphArea.clientHeight) / 2 - DEFAULT_HEIGHT * 2;
   },
   computed: {
     edgesWithPositions(): PositionedEdge[] {
@@ -262,7 +265,7 @@ export default Vue.extend({
         };
      });
     },
-    selectedObject(): NodeData | Edge {
+    selectedObject(): NodeMetadata | Edge {
       return this.selectedNodeId
         ? this.graph.getNode(this.selectedNodeId)
         : this.selectedEdge && this.graph.getEdge(this.selectedEdge);

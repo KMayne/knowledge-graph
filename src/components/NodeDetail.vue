@@ -1,40 +1,55 @@
 <template>
 <section class="detail-panel">
   <h4>Node properties</h4>
-  <md-field>
-    <label>Text</label>
-    <md-input :value="node.text" @input="handleTextChange"></md-input>
-  </md-field>
-  <md-field>
-    <label>Type</label>
-    <md-select :value="node.type" @input="handleTypeChange">
-      <md-option v-for="type in nodeTypes" :value="type[0]" :key="type[0]">{{ type[1] }}</md-option>
-    </md-select>
-  </md-field>
+  <DataField v-for="field in fields" :key="field.id" :field="field"
+    :value="field.builtIn ? node[field.propertyName] : node.data[schemaId][field.propertyName]"
+    @change="value => handleFieldChange(field, value)" />
 </section>
 </template>
 
 <script lang="ts">
-import { NodeChange, UserNodeTypes } from '@/Node';
+import { NodeChange, NodeFragement, UserNodeTypes } from '@/Node';
 import Vue from 'vue';
 import { NodeType }  from '@/Node';
+import { extractFields, FieldMetadata } from '@/SchemaGraph';
+import { KnowledgeGraphModel } from '@/KnowledgeGraphModel';
+import DataField from './DataField.vue';
 
 export default Vue.extend({
-  props: ['node'],
+  props: ['node', 'graph'],
+  components: { DataField },
   methods: {
-    handleTextChange(newText: string) {
-      this.$emit('action', new NodeChange(this.node.id, { text: this.node.text },
-        { text: newText }, `text-change[${this.node.id}`));
+    handleFieldChange(field: FieldMetadata, newValue: any) {
+      const [before, after]: NodeFragement[] = field.builtIn ? [
+          { [field.propertyName]: this.node[field.propertyName] },
+          { [field.propertyName]: newValue }
+        ] : [
+          { data: this.node.data },
+          { data: {
+            ...this.node.data,
+            [this.schemaId]: {
+              ...this.node.data[this.schemaId],
+              [field.propertyName]: newValue
+            }
+          }}
+        ];
+      this.$emit('action', new NodeChange(this.node.id, this.copyFragement(before),
+        this.copyFragement(after), `${field.propertyName}-change[${this.node.id}`));
     },
-    handleTypeChange(newType: NodeType) {
-      this.$emit('action', new NodeChange(this.node.id, { type: this.node.type },
-        { type: newType }, `type-change[${this.node.id}`));
-    },
+    copyFragement(obj: NodeFragement) {
+      return JSON.parse(JSON.stringify(obj));
+    }
   },
   computed: {
-    nodeTypes: () => {
+    schemaId(): string {
+      return (this.graph as KnowledgeGraphModel).schema.id;
+    },
+    nodeTypes(): Array<[NodeType, string]> {
       return UserNodeTypes.map(t => [t, NodeType[Number(t)]]);
-    }
+    },
+    fields(): FieldMetadata[] {
+      return extractFields(this.graph.schema);
+    },
   }
 });
 </script>

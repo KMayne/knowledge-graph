@@ -1,43 +1,55 @@
+import { v4 as uuidV4 } from 'uuid';
 import { AbstractActionProcessor, Action, ActionProcessor, ActionType } from "./Action";
 import { Edge, EdgeAction, EdgeChange, EdgeActionType } from './Edge';
-import { NodeAction, NodeActionType, NodeChange, NodeData, NodeType } from "./Node";
+import { NodeAction, NodeActionType, NodeChange, NodeMetadata, NodeType } from "./Node";
+import { newSchemaFromDefault, SchemaGraph } from "./SchemaGraph";
 
 export interface Graph {
   name: string;
-  nodes: NodeData[];
+  nodes: NodeMetadata[];
   edges: Edge[];
+}
+
+export function generateNodeId(): string {
+  return `n-${uuidV4()}`;
+}
+
+export function generateGraphId(): string {
+  return `g-${uuidV4()}`;
 }
 
 export class KnowledgeGraphModel extends AbstractActionProcessor implements Graph {
   id: string;
   name: string;
-  nodes: NodeData[];
+  nodes: NodeMetadata[];
   edges: Edge[];
+  schema: SchemaGraph;
 
-  constructor(name: string, nodes: NodeData[] = [], edges: Edge[] = []) {
+  constructor(name: string, nodes: NodeMetadata[] = [], edges: Edge[] = [], schema: SchemaGraph) {
     super();
-    this.id = this.generateId();
+    this.id = generateGraphId();
     this.name = name;
     this.nodes = nodes;
     this.edges = edges;
+    this.schema = schema;
   }
 
-  static loadFromStorage(defaultNodeList: NodeData[]): KnowledgeGraphModel {
+  static loadFromStorage(defaultNodeList: NodeMetadata[]): KnowledgeGraphModel {
     const savedGraph = localStorage.getItem('graph');
     if (savedGraph && savedGraph !== '') {
       try {
         const parsedGraph = JSON.parse(savedGraph);
-        return new KnowledgeGraphModel(parsedGraph.name, parsedGraph.nodes, parsedGraph.edges);
+        return new KnowledgeGraphModel(parsedGraph.name, parsedGraph.nodes, parsedGraph.edges, parsedGraph.schema);
       }
       catch (e) {
         console.error('Error occured parsing saved graph - backing up graph.');
         localStorage.setItem('graph-backup-' + (new Date()).toISOString(), savedGraph);
       }
     }
-    return new KnowledgeGraphModel('🌲', defaultNodeList);
+    return new KnowledgeGraphModel('🌲', defaultNodeList, [], newSchemaFromDefault());
   }
 
-  getNode(id: string): NodeData {
+  getNode(id: string): NodeMetadata {
     return this.nodes[this.getNodeIndex(id)];
   }
 
@@ -45,16 +57,12 @@ export class KnowledgeGraphModel extends AbstractActionProcessor implements Grap
     return this.edges.find(e => e.id === id);
   }
 
-  generateId(): string {
-    return Math.random().toString(16);
-  }
-
   hasEdge(fromId: string, toId: string): boolean {
     return this.edges.some(e => e.fromId === fromId && e.toId === toId);
   }
 
   serialise(): string {
-    return JSON.stringify({ name: this.name, nodes: this.nodes, edges: this.edges });
+    return JSON.stringify({ name: this.name, nodes: this.nodes, edges: this.edges, schema: this.schema });
   }
 
   protected getActionHandler(actionType: ActionType): ActionProcessor | undefined {
@@ -78,7 +86,7 @@ export class KnowledgeGraphModel extends AbstractActionProcessor implements Grap
 
   private sortNodes(): void {
     // Sort in reading order
-    this.nodes.sort((a: NodeData, b: NodeData) => a.y == b.y ? a.x - b.x : a.y - b.y);
+    this.nodes.sort((a: NodeMetadata, b: NodeMetadata) => a.y == b.y ? a.x - b.x : a.y - b.y);
   }
 
   private getHandler(actionType: ActionType) {
@@ -160,7 +168,7 @@ export class KnowledgeGraphModel extends AbstractActionProcessor implements Grap
     }
   }
 
-  private replaceNode(id: string, replacer: (n: NodeData) => NodeData | undefined): boolean {
+  private replaceNode(id: string, replacer: (n: NodeMetadata) => NodeMetadata | undefined): boolean {
     const idx = this.getNodeIndex(id);
     if (idx === -1) {
       console.warn('Node replacement target not found');
