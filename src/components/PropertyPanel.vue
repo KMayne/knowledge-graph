@@ -36,7 +36,6 @@ export default Vue.extend({
 
 section.detail-panel {
   text-align: left;
-  padding: 8px 16px;
 }
 
 h4 {

@@ -1,9 +1,19 @@
 <template>
 <section class="detail-panel">
   <h4>Node properties</h4>
-  <DataField v-for="field in fields" :key="field.id" :field="field"
-    :value="field.builtIn ? node[field.propertyName] : node.data[schemaId][field.propertyName]"
-    @change="value => handleFieldChange(field, value)" />
+  <v-expansion-panels :multiple="true" :accordion="true" v-model="openPanels">
+    <v-expansion-panel v-for="(fields, groupName) in groupedFields" :key="groupName">
+      <v-expansion-panel-header>
+        {{ groupName }}
+      </v-expansion-panel-header>
+      <v-expansion-panel-content>
+        <DataField v-for="field in fields" :key="field.id" :field="field"
+          :value="field.builtIn ? node[field.propertyName] : node.data[schemaId][field.propertyName]"
+          @change="value => handleFieldChange(field, value)" />
+      </v-expansion-panel-content>
+    </v-expansion-panel>
+  </v-expansion-panels>
+
 </section>
 </template>
 
@@ -17,6 +27,9 @@ import DataField from './DataField.vue';
 
 export default Vue.extend({
   props: ['node', 'graph'],
+  data: () => ({
+    openPanels: [0]
+  }),
   components: { DataField },
   methods: {
     handleFieldChange(field: FieldMetadata, newValue: any) {
@@ -47,8 +60,15 @@ export default Vue.extend({
     nodeTypes(): Array<[NodeType, string]> {
       return UserNodeTypes.map(t => [t, NodeType[Number(t)]]);
     },
-    fields(): FieldMetadata[] {
-      return extractFields(this.graph.schema);
+    groupedFields(): Record<string, FieldMetadata[]> {
+      // Pre-populate with General so it appears first
+      const groups: Record<string, FieldMetadata[]> = { 'General': [] };
+      extractFields(this.graph.schema).forEach(f => {
+        const fieldGroup = f.group || 'General';
+        if (!groups[fieldGroup]) { groups[fieldGroup] = []; }
+        groups[fieldGroup].push(f);
+      });
+      return groups;
     },
   }
 });
@@ -56,6 +76,12 @@ export default Vue.extend({
 
 <style scoped>
 h4 {
-  margin: 8px 0 24px 0;
+  margin: 24px 16px 16px 16px;
+  /* padding: 8px 16px; */
+
+}
+
+.v-item-group {
+  position: static;
 }
 </style>
