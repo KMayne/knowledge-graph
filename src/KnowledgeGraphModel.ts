@@ -1,22 +1,9 @@
-import { v4 as uuidV4 } from 'uuid';
-import { AbstractActionProcessor, Action, ActionProcessor, ActionType } from "./Action";
-import { Edge, EdgeAction, EdgeChange, EdgeActionType } from './Edge';
-import { NodeAction, NodeActionType, NodeChange, NodeMetadata, NodeType } from "./Node";
-import { newSchemaFromDefault, SchemaGraph } from "./SchemaGraph";
-
-export interface Graph {
-  name: string;
-  nodes: NodeMetadata[];
-  edges: Edge[];
-}
-
-export function generateNodeId(): string {
-  return `n-${uuidV4()}`;
-}
-
-export function generateGraphId(): string {
-  return `g-${uuidV4()}`;
-}
+import { migrateSavedGraph, serialiseGraph } from "./migrations";
+import { AbstractActionProcessor, Action, ActionProcessor, ActionType } from "./models/Action";
+import { Edge, EdgeAction, EdgeChange, EdgeActionType } from './models/Edge';
+import { generateGraphId, Graph, SerialisedGraph } from "./models/Graph";
+import { NodeAction, NodeActionType, NodeChange, NodeMetadata, NodeType } from "./models/Node";
+import { newSchemaFromDefault, SchemaGraph } from "./models/schema-graph";
 
 export class KnowledgeGraphModel extends AbstractActionProcessor implements Graph {
   id: string;
@@ -34,12 +21,19 @@ export class KnowledgeGraphModel extends AbstractActionProcessor implements Grap
     this.schema = schema;
   }
 
+  static fromSerialisedGraph(graph: SerialisedGraph): KnowledgeGraphModel {
+    if (!graph.schema) {
+      throw new Error('Graphs must have a schema to be hydrated into a KnowledgeGraphModel');
+    }
+    return new KnowledgeGraphModel(graph.name, graph.nodes, graph.edges, graph.schema);
+  }
+
   static loadFromStorage(defaultNodeList: NodeMetadata[]): KnowledgeGraphModel {
     const savedGraph = localStorage.getItem('graph');
     if (savedGraph && savedGraph !== '') {
       try {
-        const parsedGraph = JSON.parse(savedGraph);
-        return new KnowledgeGraphModel(parsedGraph.name, parsedGraph.nodes, parsedGraph.edges, parsedGraph.schema);
+        const migratedGraph = migrateSavedGraph(JSON.parse(savedGraph));
+        return this.fromSerialisedGraph(migratedGraph);
       }
       catch (e) {
         console.error('Error occured parsing saved graph - backing up graph.');
@@ -62,7 +56,7 @@ export class KnowledgeGraphModel extends AbstractActionProcessor implements Grap
   }
 
   serialise(): string {
-    return JSON.stringify({ name: this.name, nodes: this.nodes, edges: this.edges, schema: this.schema });
+    return serialiseGraph(this);
   }
 
   protected getActionHandler(actionType: ActionType): ActionProcessor | undefined {

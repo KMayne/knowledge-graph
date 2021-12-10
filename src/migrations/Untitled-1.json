@@ -1,0 +1,63 @@
+{
+  "name": "🌲",
+  "nodes": [
+    {
+      "id": "0.8bce28b0b581a",
+      "text": "Hello",
+      "x": 144.22218322753906,
+      "y": 71.11109924316406,
+      "width": 100,
+      "height": 80,
+      "graph": {
+        "id": "0.0afde1f8ccd1f",
+        "name": "Hello",
+        "nodes": [],
+        "edges": []
+      }
+    },
+    {
+      "id": "0.b1aa4fb352e1e",
+      "text": "Schema",
+      "type": 0,
+      "x": 493,
+      "y": 72,
+      "width": 135,
+      "height": 59,
+      "graph": {
+        "id": "0.b4fe2f39f8905",
+        "name": "Schema",
+        "nodes": [
+          {
+            "id": "0.a14747e1d219e",
+            "text": "Text",
+            "type": 0,
+            "x": 490,
+            "y": 86,
+            "width": 100,
+            "height": 60
+          },
+          {
+            "id": "0.10795ac9d4965",
+            "text": "Name",
+            "type": 0,
+            "x": 178,
+            "y": 93,
+            "width": 100,
+            "height": 60
+          },
+          {
+            "id": "0.0d5a0b2206c75",
+            "text": "Type",
+            "type": 0,
+            "x": 334,
+            "y": 98,
+            "width": 100,
+            "height": 60
+          }
+        ],
+        "edges": []
+      }
+    }
+  ],
+  "edges": []
+}

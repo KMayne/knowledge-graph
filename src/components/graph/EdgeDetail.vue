@@ -10,7 +10,7 @@
 </template>
 
 <script lang="ts">
-import { EdgeChange, EdgeDirection } from '@/Edge';
+import { EdgeChange, EdgeDirection } from '@/models/Edge';
 import Vue from 'vue';
 
 export default Vue.extend({

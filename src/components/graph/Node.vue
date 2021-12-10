@@ -19,7 +19,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { NodeAction, NodeActionType, NodeChange, NodeType } from '../Node';
+import { NodeAction, NodeActionType, NodeChange, NodeType } from '../../models/Node';
 const DOUBLE_CLICK_THRESHOLD = 500;
 
 export default Vue.extend({

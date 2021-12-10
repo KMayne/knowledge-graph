@@ -1,9 +1,9 @@
 import VueRouter from 'vue-router';
-import MainPage from './components/MainPage.vue';
+import GraphEditor from './components/graph-editor/GraphEditor.vue';
 
 export default new VueRouter({
   mode: 'history',
   routes: [
-    { path: '/', component: MainPage },
+    { path: '/', component: GraphEditor },
   ]
 });

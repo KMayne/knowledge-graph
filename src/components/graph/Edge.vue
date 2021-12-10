@@ -10,7 +10,7 @@
 </template>
 
 <script lang="ts">
-import { EdgeAction, EdgeActionType, EdgeDirection } from '@/Edge';
+import { EdgeAction, EdgeActionType, EdgeDirection } from '@/models/Edge';
 import Vue from 'vue';
 
 const ARROW_SIZE = 16;

@@ -10,16 +10,16 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { ActionHistoryTree } from '@/ActionHistoryTree';
-import GraphComponent from './Graph.vue';
+import { ActionHistoryTree } from '@/models/ActionHistoryTree';
+import GraphComponent from '../graph/Graph.vue';
 import ToolbarComponent from './Toolbar.vue';
 import { KnowledgeGraphModel } from '@/KnowledgeGraphModel';
-import { Action } from '@/Action';
-import { DEFAULT_HEIGHT, DEFAULT_WIDTH, NodeType } from '@/Node';
-import { newSchemaFromDefault } from '@/SchemaGraph';
+import { Action } from '@/models/Action';
+import { DEFAULT_HEIGHT, DEFAULT_WIDTH, NodeType } from '@/models/Node';
+import { newSchemaFromDefault } from '@/models/schema-graph';
 
 export default Vue.extend({
-  name: 'MainPage',
+  name: 'GraphEditor',
   components: { Graph: GraphComponent, Toolbar: ToolbarComponent },
   mounted() {
     window.addEventListener('keypress', e => {

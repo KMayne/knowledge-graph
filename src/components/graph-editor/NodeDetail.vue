@@ -8,8 +8,7 @@
       </v-expansion-panel-header>
       <v-expansion-panel-content>
         <DataField v-for="field in fields" :key="field.id" :field="field"
-          :value="field.builtIn ? node[field.propertyName] : node.data[schemaId][field.propertyName]"
-          @change="value => handleFieldChange(field, value)" />
+          :value="field.value" @change="value => handleFieldChange(field, value)" />
       </v-expansion-panel-content>
     </v-expansion-panel>
   </v-expansion-panels>
@@ -18,12 +17,13 @@
 </template>
 
 <script lang="ts">
-import { NodeChange, NodeFragement, UserNodeTypes } from '@/Node';
+import { NodeChange, NodeFragement, UserNodeTypes } from '@/models/Node';
 import Vue from 'vue';
-import { NodeType }  from '@/Node';
-import { extractFields, FieldMetadata } from '@/SchemaGraph';
+import { NodeType }  from '@/models/Node';
 import { KnowledgeGraphModel } from '@/KnowledgeGraphModel';
-import DataField from './DataField.vue';
+import DataField from '../DataField.vue';
+import { FieldMetadata } from '@/models/schema-graph/FieldMetadata';
+import { extractFields } from '@/models/schema-graph';
 
 export default Vue.extend({
   props: ['node', 'graph'],
@@ -51,6 +51,11 @@ export default Vue.extend({
     },
     copyFragement(obj: NodeFragement) {
       return JSON.parse(JSON.stringify(obj));
+    },
+    getFieldValue(field: FieldMetadata) {
+      return this.node && (field.builtIn
+        ? this.node[field.propertyName]
+        : (this.node.data[this.schemaId] || {})[field.propertyName])
     }
   },
   computed: {
@@ -60,16 +65,16 @@ export default Vue.extend({
     nodeTypes(): Array<[NodeType, string]> {
       return UserNodeTypes.map(t => [t, NodeType[Number(t)]]);
     },
-    groupedFields(): Record<string, FieldMetadata[]> {
+    groupedFields(): Record<string, (FieldMetadata & { value: any })[]> {
       // Pre-populate with General so it appears first
-      const groups: Record<string, FieldMetadata[]> = { 'General': [] };
+      const groups: Record<string, (FieldMetadata & { value: any })[]> = { 'General': [] };
       extractFields(this.graph.schema).forEach(f => {
         const fieldGroup = f.group || 'General';
         if (!groups[fieldGroup]) { groups[fieldGroup] = []; }
-        groups[fieldGroup].push(f);
+        groups[fieldGroup].push({ ...f, value: this.getFieldValue(f) });
       });
       return groups;
-    },
+    }
   }
 });
 </script>
@@ -77,8 +82,6 @@ export default Vue.extend({
 <style scoped>
 h4 {
   margin: 24px 16px 16px 16px;
-  /* padding: 8px 16px; */
-
 }
 
 .v-item-group {

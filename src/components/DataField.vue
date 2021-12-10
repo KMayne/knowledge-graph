@@ -1,26 +1,29 @@
 <template>
 <md-field>
   <label>{{ field.friendlyName }}</label>
-  <md-select v-if="isEnum"
+  <!-- <md-select v-if="isEnum"
     :value="value" @input="handleInput">
     <md-option v-for="value, idx in field.enum" :key="value" :value="idx">{{ value }}</md-option>
-  </md-select>
-  <md-textarea v-if="isText"
-    :value="value" @input="handleInput"></md-textarea>
+  </md-select> -->
+  <!-- <md-textarea v-if="isText"
+    :value="value" @input="handleInput"></md-textarea> -->
   <md-input v-if="inputType !== null"
     :value="value" @input="handleInput" :type="inputType" :step="stepSize"></md-input>
 </md-field>
 </template>
 
 <script lang="ts">
-import { FieldMetadata, FieldType, parseFieldValue } from '@/SchemaGraph';
+import { parseFieldValue } from '@/models/schema-graph/SchemaFields';
+import { FieldMetadata } from '@/models/schema-graph/FieldMetadata';
 import Vue from 'vue';
+import { FieldType } from '@/models/schema-graph/FieldType';
 
 export default Vue.extend({
   props: ['field', 'value'],
   methods: {
     handleInput(e: string) {
       this.$emit('change', parseFieldValue(e, this.field));
+      console.log(FieldType[this.field.type], this.inputType)
     }
   },
   computed: {

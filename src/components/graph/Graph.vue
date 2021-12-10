@@ -27,7 +27,7 @@
       @action="a => $emit('action', a)"
       @focus="updateSelectedNode(node.id)"
     ></Node>
-    <property-panel v-if="selectedObject" :target="selectedObject" :targetType="selectedObjectType"
+    <property-panel v-show="selectedObject !== undefined" :target="selectedObject" :targetType="selectedObjectType"
       :graph="graph" @action="a => $emit('action', a)">
     </property-panel>
   </section>
@@ -37,10 +37,9 @@
 import Vue from 'vue';
 import NodeComponent from './Node.vue';
 import EdgeComponent from './Edge.vue';
-import PropertyPanel from './PropertyPanel.vue';
-import { getRectCentre, getClippedCentreJoiningLine, NodeAction, NodeActionType, NodeMetadata, Coords, NodeType, DEFAULT_WIDTH, DEFAULT_HEIGHT } from '@/Node';
-import { Edge, EdgeAction, EdgeActionType, EdgeDirection } from '@/Edge';
-import { generateNodeId } from '@/KnowledgeGraphModel';
+import PropertyPanel from '../graph-editor/PropertyPanel.vue';
+import { getRectCentre, getClippedCentreJoiningLine, NodeAction, NodeActionType, NodeMetadata, Coords, NodeType, DEFAULT_WIDTH, DEFAULT_HEIGHT, generateNodeId } from '@/models/Node';
+import { Edge, EdgeAction, EdgeActionType, EdgeDirection } from '@/models/Edge';
 
 type PositionedEdge = ({
   fromX: number,
@@ -271,6 +270,7 @@ export default Vue.extend({
         : this.selectedEdge && this.graph.getEdge(this.selectedEdge);
     },
     selectedObjectType(): string {
+      console.log(this.selectedNodeId, this.selectedEdge)
       return this.selectedNodeId ? 'node'
              : this.selectedEdge ? 'edge'
              : '';

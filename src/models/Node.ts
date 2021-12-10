@@ -1,6 +1,7 @@
 import { Action, ActionType } from './Action'
-import { KnowledgeGraphModel } from './KnowledgeGraphModel';
-import { DataStore } from './SchemaGraph';
+import { KnowledgeGraphModel } from '../KnowledgeGraphModel';
+import { DataStore } from './schema-graph';
+import { v4 as uuidV4 } from 'uuid';
 
 export interface Coords {
   x: number,
@@ -84,6 +85,10 @@ export class NodeAction implements Action {
     this.node = node;
     this.subType = subType;
   }
+}
+
+export function generateNodeId(): string {
+  return `n-${uuidV4()}`;
 }
 
 export function getRectCentre(rect: Rect): Coords {
