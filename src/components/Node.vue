@@ -247,6 +247,7 @@ export default Vue.extend({
   padding: 15px 10px;
   outline: 0px solid transparent;
   user-select: none;
+  line-height: 1.2;
 }
 
 .type-icon {
